@@ -91,6 +91,7 @@ class ApproxDistanceOracle:
             w = self.p[i][u]
         return self.a_distances[w][u] + self.a_distances[w][v]
 
+
     @staticmethod
     def distance_fn(u, v):
         return 5
