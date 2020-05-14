@@ -23,8 +23,6 @@ class Edge:
 INF = 1000000000
 
 
-
-
 class ApproxDistanceOracle:
 
     def __init__(self, V, E, k=2):
@@ -42,10 +40,10 @@ class ApproxDistanceOracle:
             prob = n ** (-1 / k)
             A[i] = {v for v in A[i-1] if weighted_coin_flip(prob)}
 
+
         """ Find minimum distances from each vertex to each other set. """
-        p = [[None for v in range(n)] for i in range(k)]  # p[i][v] is the i-center nearest to v
-        distances = {}  # maps pair (A_i, v) to a distance.
-        distance_to_A = {}
+        a_distances = [[None for _ in range(n)] for _ in range(n)]  # maps pair (A_i, v) to a distance. a_distance[u][v] = a_distance[p[i][u]][v]
+        p = [dict() for _ in range(k)]  # p[i][v] is the vertex nearest to v
 
         # Bunches!
         # B[v] contains the union of all sets B_i.
@@ -56,31 +54,32 @@ class ApproxDistanceOracle:
 
         for v in V:
             for i in range(k):
-                min_dist, w = find_closest_vertex(A, v, i, distances)
-                distances[(A[i], v)] = min_dist
+                min_dist, w = self.find_closest_vertex(A[i], v)
                 p[i][v] = w
-            distances[(A[k], v)] = INF
+                a_distances[w][v] = min_dist
+            a_distances[k][v] = INF
 
             B[v] = set()
             for i in range(k):
-                B[v] |= {w for w in A[i] - A[i-1] if distances[(w, v)] < distances[(A[i], v)]}
-        print(distances)
+                B[v] |= {w for w in A[i] - A[i-1] if self.distance_fn(w, v) < a_distances[i][v]}
+
+        print(a_distances)
         print(p)
 
         hash_table = {}
         for v, b_set in B.items():
             for w in b_set:
-                hash_table[w] = distances[(w, v)]
+                hash_table[w] = self.distance_fn(w, v)
 
         # Notes:
         #    for fixed v, the distance is weakly increasing with i
-        #    for all v, distance(A[0], v) = 0 and p(0, v) = v
+        #    for all v, a_distance[0][v] = 0 and p[0][v] = v
 
         self.k = k
         self.B = B
         self.p = p
-        # self.hash_table = hash_table
-        self.distances = distances
+        self.hash_table = hash_table
+        self.a_distances = a_distances
 
 
     def query(self, u, v):
@@ -90,22 +89,27 @@ class ApproxDistanceOracle:
             i += 1
             u, v = v, u
             w = self.p[i][u]
-        return self.distances[(w, u)] + self.distances[(w, v)]
+        return self.a_distances[w][u] + self.a_distances[w][v]
+
+    @staticmethod
+    def distance_fn(u, v):
+        return 5
 
 
-def find_closest_vertex(A, v, i, distances):
-    """
-    The result of the below code is that:
-        distances[(A[i], v)] = min([ distances[(w, v)] for w in A[i] ])
-        p[(i, v)] = w
-    """
-    min_dist = INF
-    closest_w = None
-    for w in A[i]:  # iterate over vertices
-        if distances[(w, v)] < min_dist:
-            min_dist = distances[(w, v)]
-            closest_w = w
-    return min_dist, closest_w
+    def find_closest_vertex(self, A_i, v):
+        """
+        The result of the below code is that:
+            distances[(A[i], v)] = min([ distances[(w, v)] for w in A[i] ])
+            p[(i, v)] = w
+        """
+        min_dist = INF
+        closest_w = None
+        for w in A_i:  # iterate over vertices
+            computed_dist = self.distance_fn(w, v)
+            if computed_dist < min_dist:
+                min_dist = computed_dist
+                closest_w = w
+        return min_dist, closest_w
 
 
 def weighted_coin_flip(prob):
