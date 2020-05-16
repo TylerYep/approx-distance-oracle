@@ -1,11 +1,13 @@
 """
 This contains the pseudocode for the ADO that I got while reading the paper.
-It should resemble the paper's pseudocode almost exactly.
+It should resemble the paper's pseudocode closely.
+Currently compiles, but completely untested. Helped me understand some confusing areas
+in the paper - specifically around the use fo the distance() function.
 """
 from typing import Dict, List, Set
 from dataclasses import dataclass
-from collections import defaultdict
 import random
+
 
 @dataclass
 class Vertex:
@@ -13,6 +15,7 @@ class Vertex:
 
     def __hash__(self):
         return hash(self.vertex_id)
+
 
 @dataclass
 class Edge:
@@ -23,6 +26,7 @@ class Edge:
 INF = 1000000000
 
 
+
 class ApproxDistanceOracle:
 
     def __init__(self, V, E, k=2):
@@ -31,9 +35,13 @@ class ApproxDistanceOracle:
         Initialize k+1 sets of vertices with decreasing sizes. (i-centers)
         """
         n = len(V)
-        # m = len(E)
+        m = len(E)
 
-        A: List[Set[Vertex]] = [set() for _ in range(k+1)]
+        self.n = n
+        self.E = E
+        self.k = k
+
+        A: List[Set[Vertex]] = [None for _ in range(k+1)]
         A[0] = V
         A[k] = set()
         for i in range(1, k):
@@ -42,45 +50,36 @@ class ApproxDistanceOracle:
 
 
         """ Find minimum distances from each vertex to each other set. """
-        a_distances = [[None for _ in range(n)] for _ in range(n)]  # maps pair (A_i, v) to a distance. a_distance[u][v] = a_distance[p[i][u]][v]
-        p = [dict() for _ in range(k)]  # p[i][v] is the vertex nearest to v
+        # stores distances from any vertex to one of the i-centers. (the closest one to the vertex)
+        a_i_v_distances = [dict() for _ in range(k+1)]
+
+        self.p = [dict() for _ in range(k+1)]  # p[i][v] is the vertex in i-center that is nearest to v
 
         # Bunches!
         # B[v] contains the union of all sets B_i.
         # B_i contains all vertices in A[i] that are strictly closer to v than all vertices in A[i-1]
         #       The partial unions of B_{i}s are balls in increasing diameter,
         #       that contain vertices with distances up to the first vertex of the next level.
-        B: Dict[Vertex, Set[Vertex]] = {}
+        self.B: Dict[Vertex, Set[Vertex]] = {}
 
         for v in V:
             for i in range(k):
                 min_dist, w = self.find_closest_vertex(A[i], v)
-                p[i][v] = w
-                a_distances[w][v] = min_dist
-            a_distances[k][v] = INF
+                a_i_v_distances[i][v] = min_dist
+                self.p[i][v] = w
+            a_i_v_distances[k][v] = INF
 
-            B[v] = set()
+            self.B[v] = set()
             for i in range(k):
-                B[v] |= {w for w in A[i] - A[i-1] if self.distance_fn(w, v) < a_distances[i][v]}
+                self.B[v] |= {w for w in A[i] - A[i+1] if self.distance_fn(w, v) < a_i_v_distances[i+1][v]}
 
-        print(a_distances)
-        print(p)
-
-        hash_table = {}
-        for v, b_set in B.items():
+        self.hash_table = [[None] * n for _ in range(n)]
+        for v, b_set in self.B.items():
             for w in b_set:
-                hash_table[w] = self.distance_fn(w, v)
-
+                self.hash_table[w][v] = self.distance_fn(w, v)
         # Notes:
         #    for fixed v, the distance is weakly increasing with i
         #    for all v, a_distance[0][v] = 0 and p[0][v] = v
-
-        self.k = k
-        self.B = B
-        self.p = p
-        self.hash_table = hash_table
-        self.a_distances = a_distances
-
 
     def query(self, u, v):
         w = u
@@ -89,12 +88,39 @@ class ApproxDistanceOracle:
             i += 1
             u, v = v, u
             w = self.p[i][u]
-        return self.a_distances[w][u] + self.a_distances[w][v]
+        return self.hash_table[w][u] + self.hash_table[w][v]
 
 
-    @staticmethod
-    def distance_fn(u, v):
-        return 5
+    def distance_fn(self, u, v):
+        """ Using a BFS just to try it out. """
+        # Mark all the vertices as not visited
+        visited = [False] * self.n
+
+        # Create a queue for BFS
+        queue = []
+
+        # Mark the source node as
+        # visited and enqueue it
+        queue.append((u, 0))
+        visited[u] = True
+
+        while queue:
+
+            # Dequeue a vertex from
+            # queue and print it
+            u, dist = queue.pop(0)
+
+            # Get all adjacent vertices of the
+            # dequeued vertex s. If a adjacent
+            # has not been visited, then mark it
+            # visited and enqueue it
+            for w in self.E[u]:
+                if w == v:
+                    return dist
+                if not visited[w]:
+                    queue.append((w, dist + 1))
+                    visited[w] = True
+        return INF
 
 
     def find_closest_vertex(self, A_i, v):
@@ -119,9 +145,14 @@ def weighted_coin_flip(prob):
 
 
 if __name__ == "__main__":
-    V = set([i for i in range(20)])
-    E = set([(i, j) for i in range(10) for j in range(5)])
-    print(V)
-    print(E)
+    V = set([i for i in range(4)])
+    E = [
+        [0, 1, 1, 0],
+        [1, 0, 1, 0],
+        [1, 1, 0, 1],
+        [0, 0, 1, 0]
+    ]
+
     ado = ApproxDistanceOracle(V, E)
-    ado.query(0, 2)
+    x = ado.query(0, 2)
+    print(x)
