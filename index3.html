@@ -1,0 +1,96 @@
+<!DOCTYPE HTML>
+<!-- Photon by HTML5 UP
+	 html5up.net | @ajlkn
+	 Free for personal and commercial use under the CCA 3.0 license (html5up.net/license) -->
+<html>
+	<head>
+		<title>Approximate Distance Oracles</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+		<link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+		<link href='https://api.mapbox.com/mapbox-gl-js/v1.8.0/mapbox-gl.css' rel='stylesheet' />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<link rel="stylesheet" href="assets/css/extra.css" />
+		<script src='https://d3js.org/d3.v5.min.js'></script>
+		<script src="https://d3js.org/d3-array.v2.min.js"></script>
+		<script src='https://api.mapbox.com/mapbox-gl-js/v1.8.0/mapbox-gl.js'></script>
+		<style>
+			#map {
+			  width: 100%;
+			  height: 100%;
+			}
+			svg {
+			  position: absolute;
+			  width: 100%;
+			  height: 100%;
+			}
+			#timeVis {
+			  position: relative;
+			  width: 100%;
+			  height: 100%;
+			}
+		  </style>
+	</head>
+	<body class="is-preload">
+		<!-- Header -->
+		<section id="header">
+			<div class="inner">
+				<span class="icon solid major fa-car-crash"></span>
+				<h1>Approximate Distance Oracles</h1>
+				<p>Hello! This is Tyler, Mark, Ivy, and Josh's project for Stanford's <a href="http://web.stanford.edu/class/cs166/"><strong>CS 166: Data Structures</strong></a>.</p>
+				<ul class="actions special">
+					<li><a href="#one" class="button">Problem</a></li>
+					<li><a href="#two" class="button">Motivation</a></li>
+					<li><a href="#three" class="button">Proof</a></li>
+					<li><a href="#four" class="button">Visualizations</a></li>
+				</ul>
+			</div>
+		</section>
+
+		<section id="four" class="main style1">
+			<div class="container">
+				<div class="row gtr-150">
+					<header class="major">
+						<h2>Bay Area Map Visualization</h2>
+					</header>
+					<div class="col-4 col-12-medium">
+						<button id="resetBtn">Reset Directions</button>
+					</div>
+				</div>
+				<svg id='vis' style="width: 1100px; height: 500px; z-index: 200;"></svg>
+				<div id='map' style='width: 1100px; height: 500px;'></div>
+				<svg id='histogramVis' style="position: relative;"></svg>
+			</div>
+		</section>
+
+		<!-- Footer -->
+		<section id="footer">
+			<ul class="icons">
+				<li><a href="#" class="icon brands alt fa-facebook-f"><span class="label">Facebook</span></a></li>
+				<li><a href="#" class="icon brands alt fa-twitter"><span class="label">Twitter</span></a></li>
+				<li><a href="#" class="icon brands alt fa-instagram"><span class="label">Instagram</span></a></li>
+				<li><a href="#" class="icon brands alt fa-github"><span class="label">GitHub</span></a></li>
+				<li><a href="#" class="icon solid alt fa-envelope"><span class="label">Email</span></a></li>
+			</ul>
+			<ul class="copyright">
+				<li>&copy; Tyler Yep, Joy Yuzuriha</li>
+				<li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+			</ul>
+		</section>
+
+		<!-- Scripts -->
+		<script src="assets/js/jquery.min.js"></script>
+		<script src="assets/js/jquery.scrolly.min.js"></script>
+		<script src="assets/js/browser.min.js"></script>
+		<script src="assets/js/breakpoints.min.js"></script>
+		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+		<script src="assets/js/zenscroll-min.js"></script>
+		<script src="assets/js/util.js"></script>
+		<script src="assets/js/main.js"></script>
+		<script src='assets/js/viz.js'></script>
+
+	</body>
+</html>

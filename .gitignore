@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 .DS_Store
+data/*
+!data/.gitkeep
+!data/accidents_bay_area_no_duplicates.csv
+!data/month_and_severity_counts.csv
 
 # C extensions
 *.so
