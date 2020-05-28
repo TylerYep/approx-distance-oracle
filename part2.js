@@ -6,6 +6,10 @@ const ON_COLOR = "grey";
 const OFF_COLOR = "black";
 const COLORS = ['#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD', '#8C564B', '#CFECF9', '#7F7F7F', '#BCBD22', '#17BECF']; // Tableau-10
 
+function squaredDist(a, b) {
+    return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2);
+}
+
 function getRandInt(min, max) {
     // Includes min and max.
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -21,7 +25,7 @@ function weightedCoinFlip(prob) {
 }
 
 const k = 4;
-const NUM_POINTS = 20;
+const NUM_POINTS = 16;
 let selected = [];
 
 
@@ -63,46 +67,46 @@ function createKSubsets(pointData) {
 }
 
 
-// let tableData = [];
-//     for (let i = 0; i < k; i++) {
-//         let row = {};
-//         for (let j = 0; j < NUM_POINTS; j++) {
-//             row[j] = 0;
-//         }
-//         tableData.push(row);
-//         for (let j = 0; j < A[i].length; j++) {
-//             tableData[i][A[i][j].id] = 1;
-//         }
-//     }
+function findClosestVertex(A_i, v) {
+    let minDist = Infinity;
+    let closestVertex = null;
+    for (let w of A_i) {
+        let computedDist = squaredDist(v, w);
+        if (computedDist < minDist) {
+            minDist = computedDist;
+            closestVertex = w;
+        }
+    }
+    return closestVertex;
+}
+
 
 
 function main() {
     const pointData = createRandomPoints();
     const A = createKSubsets(pointData);
     let tableData = [];
-    for (let i = 0; i < NUM_POINTS; i++) {
+    for (let v = 0; v < NUM_POINTS; v++) {
         let row = {};
-        for (let j = 0; j < k; j++) {
-            row[j] = 0;
+        for (let i = 0; i < k; i++) {
+            row[i] = findClosestVertex(A[i], pointData[v]).id;
         }
         tableData.push(row);
-
     }
-
     drawLines(pointData);
     drawPoints(pointData);
-    tabulate(tableData, [...Array(tableData.length).keys()]);
+    tabulate(tableData, [...Array(tableData.length).keys()], [...Array(k).keys()]);
 }
 
 
-function tabulate(data, columns) {
+function tabulate(data, rowHeaders, columnHeaders) {
 	const table = d3.select('#table-container').append('table');
 	const thead = table.append('thead');
 	const tbody = table.append('tbody');
 
 	thead.append('tr')
         .selectAll('th')
-        .data([""].concat(columns))
+        .data([""].concat(columnHeaders))
         .enter()
         .append('th')
         .text(d => d);
@@ -114,10 +118,10 @@ function tabulate(data, columns) {
         .append('tr');
 
     rows.append('th')
-        .text((_, i) => columns[i])
+        .text((_, i) => rowHeaders[i])
 
 	rows.selectAll('td')
-        .data(row => columns.map(col => ({
+        .data(row => columnHeaders.map(col => ({
             column: col,
             value: row[col],
         })))
@@ -181,15 +185,10 @@ function drawPoints(pointData) {
     );
 }
 
-function squaredDist(a, b) {
-    return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2);
-}
-
 
 function drawCircles(pointData) {
     const centerPoint = pointData[selected[0]];
     const radiusPoint = pointData[selected[1]];
-    console.log(squaredDist(centerPoint, radiusPoint))
     svg.selectAll(".bigCircle").data([pointData[0]]).join(
         enter => {
             enter.append("circle")
