@@ -10,6 +10,19 @@ let yscale = d3.scaleLinear()
 const ON_COLOR = "darkorange";
 const OFF_COLOR = "black";
 
+const unusedPointData = [
+    {x: 3, y: 1, color: "navy"},
+    {x: 8, y: -3, color: "navy"},
+    {x: 2, y: 3, color: "navy"},
+    {x: 10, y: 1, color: "navy"},
+    {x: 8, y: 3, color: "navy"},
+    {x: 2, y: -2, color: "navy"},
+    {x: 5, y: 0, color: "darkorange"},
+    {x: 6, y: 5, color: "darkorange"},
+    {x: 6, y: -4, color: "darkorange"},
+    {x: 7, y: 0, color: "darkorange"},
+    {x: 4, y: 2, color: "darkorange"},
+];
 
 function main() {
     const pointData = [
@@ -72,38 +85,6 @@ function stairTabulate(data, columns) {
         // .attr("class", d => d.value > 0 ? "border" : "")
         .text(d => d.value > 0 ? d.value: "");
 }
-
-function tabulate(data, columns) {
-	const table = d3.select('#table-container').append('table');
-	const thead = table.append('thead');
-	const tbody = table.append('tbody');
-
-	thead.append('tr')
-        .selectAll('th')
-        .data([""].concat(columns))
-        .enter()
-        .append('th')
-        .text(d => d);
-
-    const rows = tbody
-        .selectAll('tr')
-        .data(data)
-        .enter()
-        .append('tr');
-
-    rows.append('th')
-        .text((_, i) => columns[i])
-
-	rows.selectAll('td')
-        .data(row => columns.map(col => ({
-            column: col,
-            value: row[col],
-        })))
-        .enter()
-        .append('td')
-        .text(d => d.value);
-}
-
 
 function colorPoints() {
     return OFF_COLOR;
