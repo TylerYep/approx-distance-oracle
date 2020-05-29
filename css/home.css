@@ -26,7 +26,13 @@ td {
     height: 100%;
 }
 
+.points {
+	cursor: pointer;
+}
+
 table {
+	cursor: pointer;
+	user-select: none;
 	margin: 0;
 	background: linear-gradient(45deg, #49a09d, #5f2c82);
 	font-family: sans-serif;
@@ -47,19 +53,10 @@ th {
 thead th {
 	background-color: #55608f;
 }
-tbody tr:hover {
-	background-color: rgba(255, 255, 255, 0.3);
-}
 tbody td {
 	position: relative;
 }
-tbody td:hover:before {
-	content: "";
-	position: absolute;
-	left: 0;
-	right: 0;
-	top: -9999px;
-	bottom: -9999px;
-	background-color: rgba(255, 255, 255, 0.2);
-	z-index: -1;
+
+tbody td:hover {
+	background-color: rgba(255, 255, 255, 0.3);
 }

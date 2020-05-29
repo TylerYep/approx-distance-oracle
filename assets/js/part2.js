@@ -81,7 +81,6 @@ function findClosestVertex(A_i, v) {
 }
 
 
-
 function main() {
     const pointData = createRandomPoints();
     const A = createKSubsets(pointData);
@@ -111,8 +110,7 @@ function tabulate(data, rowHeaders, columnHeaders) {
         .append('th')
         .text(d => d);
 
-    const rows = tbody
-        .selectAll('tr')
+    const rows = tbody.selectAll('tr')
         .data(data)
         .enter()
         .append('tr');
@@ -127,7 +125,15 @@ function tabulate(data, rowHeaders, columnHeaders) {
         })))
         .enter()
         .append('td')
-        .text(d => d.value);
+        .text(d => d.value)
+        .on("mouseover", function(d) {
+            // Needs to be a function to have access to "this".
+            console.log(d)
+        })
+        .on("mouseout", function(_) {
+            // Needs to be a function to have access to "this".
+            d3.select(this).style("fill", d => d.color);
+        });
 }
 
 
@@ -157,14 +163,23 @@ function drawPoints(pointData) {
             .attr("cx", d => xscale(d.x))
             .attr("cy", d => yscale(d.y))
             .attr("r", DOTSIZE)
-            .on("click", d => {
-                if (selected.length == 2) {
-                    selected[1] = d.id;
-                } else {
+            .on("click", function(d) {
+                if (selected.length == 0) {
                     selected.push(d.id);
+                    d3.select(this).style("fill", ON_COLOR);
+                } else if (selected.length == 1) {
+                    selected.push(d.id);
+                    drawCircles(pointData);
+                    drawPoints(pointData);
+                } else if (selected.length == 2) {
+                    if (d.id == selected[0]) {
+                        selected = [];
+                    } else {
+                        selected[1] = d.id;
+                        drawCircles(pointData);
+                        drawPoints(pointData);
+                    }
                 }
-                drawCircles(pointData);
-                drawPoints(pointData);
             })
             .on("mouseover", function(_) {
                 // Needs to be a function to have access to "this".
