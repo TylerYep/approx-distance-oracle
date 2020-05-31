@@ -15,6 +15,53 @@
 		<script src='https://d3js.org/d3.v5.min.js'></script>
 		<script src="https://d3js.org/d3-array.v2.min.js"></script>
 		<script src='https://api.mapbox.com/mapbox-gl-js/v1.8.0/mapbox-gl.js'></script>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" integrity="sha384-zB1R0rpPzHqg7Kpt0Aljp8JPLqbXI3bhnPWROx27a9N0Ll6ZP/+DiW/UqRcLbRjq" crossorigin="anonymous">
+		<script defer src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js" integrity="sha384-y23I5Q6l+B6vatafAwxRu/0oK/79VlbSz7Q9aiSZUvyWYIYsd+qj+o24G5ZU2zJz" crossorigin="anonymous"></script>
+		<script>
+			katexOptions = {
+				delimiters: [
+					{left: "$$", right: "$$", display: true},
+					{left: "$", right: "$", display: false},
+					{left: "\\(", right: "\\)", display: false},
+					{left: "\\[", right: "\\]", display: true}
+				],
+				macros: {
+					// Probability
+					"\\pr": "\\operatorname*{Pr}",
+					"\\ex": "\\operatorname*{\\mathbb{E}}",
+					"\\prob": "\\pr \\sqbr{#1}",
+					"\\ev": "\\ex \\sqbr{#1}",
+
+					// Delimiters
+					"\\abs": "\\left\\lvert #1 \\right\\rvert",
+					"\\norm": "\\left\\lVert #1 \\right\\rVert",
+					"\\curl": "\\left\\{ #1 \\right\\}",
+					"\\ceil": "\\left\\lceil #1 \\right\\rceil",
+					"\\floor": "\\left\\lfloor #1 \\right\\rfloor",
+					"\\paren": "\\left( #1 \\right)",
+					"\\sqbr": "\\left[ #1 \\right]",
+
+					// Asymptotic notation
+					"\\bigo": "O \\paren{#1}",
+					"\\bigtheta": "\\Theta \\paren{#1}",
+					"\\bigomega": "\\Omega \\paren{#1}",
+					"\\bigotilde": "\\tilde{O} \\paren{#1}",
+					"\\smallo": "o \\paren{#1}",
+					"\\smallomega": "\\omega \\paren{#1}",
+
+					// ADOs
+					"\\dist": "\\delta \\paren{#1, #2}",
+					"\\edist": "\\hat{\\delta} \\paren{#1, #2}",
+					"\\p": "p \\paren{#1}",
+					"\\pp": "p_{#1} \\paren{#2}",
+					"\\bunch": "B \\paren{#1}",
+					"\\cluster": "C \\paren{#1}",
+					"\\ind": "\\operatorname*{\\mathbb{1}} \\sqbr{#1}"
+				}
+			};
+		</script>
+		<script defer src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js" integrity="sha384-kWPLUVMOks5AQFrykwIup5lo0m3iMkkHrD0uJ4H5cjeGihAutqP0yW0J6dpFiVkI" crossorigin="anonymous"
+			onload="renderMathInElement(document.body, katexOptions);"></script>
 		<style>
 			#map {
 			  width: 100%;
@@ -45,6 +92,181 @@
 					<li><a href="#three" class="button">Proof</a></li>
 					<li><a href="#four" class="button">Visualizations</a></li>
 				</ul>
+			</div>
+		</section>
+
+		<section id="one" class="main style1">
+			<div class="container">
+				<h2>Problem</h2>
+				<p>
+					The all-pairs shortest paths problem (APSP) asks us to, given a graph $G = \paren{V, E}$ with $n$ vertices and $m$ edges, find the shortest paths between all pairs of vertices. Algorithms solving APSP do so in time $\bigotilde{mn}$ and produce a data structure of size $\bigo{n^2}$, but in many cases, this may be computationally expensive, and we may not care about all distances or exact distances. The goal of an Approximate Distance Oracle is to preprocess a weighted undirected graph in time $\smallo{mn}$, produce a data structure of size $\smallo{n^2}$, and give approximate distances in time $\bigo{1}$. Below, we walk through different attempts at creating such a data structure, refining our previous version at each iteration to eventually arrive at something efficient and approximately correct. We have $\dist{u}{v}$ denote the shortest distance between vertices $u$ and $v$ and $\edist{u}{v}$ denote an approximation of that distance.
+				</p>
+			</div>
+		</section>
+
+		<section class="main style1">
+			<div class="container">
+				<h2>First Attempt: A simple probabilistic solution</h2>
+				<p>
+					We cannot store all distances in space $\smallo{n^2}$, so we must make some choices about what distances to store. A natural approach is to choose these distances probabilistically. We can construct a set $A \subseteq V$ by adding each $v \in V$ to $A$ with some probability $q$. Once we have this set, for every $v \in V$ and $w \in A$, we calculate and store the $\dist{v}{w}$ (we explore the best way to do this in \cref{ss:prepro}). When we receive some query $\dist{u}{v}$, if one of $u$ and $v$ is in $A$, then we've already calculated the shortest distance, and we can return that. Otherwise, we can choose some $w \in A$, say, the $w\in A$ that is least distant from $u$, and return the approximation $\edist{u}{v} = \dist{u}{w} + \dist{w}{v}$.
+				</p>
+				<!-- TODO: Visualization goes here -->
+				<p>
+					So, how good of an approximation is this? We will certainly not get an underapproximation since a path from $u$ to $w$ to $v$ must be at least as long as the shortest path from $u$ to $v$. It turns out, however, that our approximation may be arbitrarily large since $u$ and $v$ may be nearby while everything in $A$ may be distant from $u$. This leads us to our second attempt.
+				</p>
+			</div>
+		</section>
+
+		<section class="main style1">
+			<div class="container">
+				<h2>Second Attempt: Limiting error</h2>
+				<p>
+					We need some way to ensure that if two vertices are near each other, we know both of their distances to some vertex that is near both of them. However, we also want to keep $|A|$ small to maintain time and space efficiency. Our solution is to, for each vertex $v$, calculate the distances from $v$ to the vertices in $A$ as well as some vertices near $v$. Specifically, we calculate the distances from $v$ to each vertex in a bunch $\bunch{v}$, where $\bunch{v}$ is the union of $A$ with the set of all vertices nearer to $v$ than all vertices in $A$. In other words, a vertex $u$ is in $\bunch{v}$ if
+					<ul>
+						<li>$u \in A$ or</li>
+						<li>$u$ is strictly less distant from $v$ than all vertices in $A$ (we describe how to find these vertices in <!-- TODO: link section \cref{ss:prepro}) -->.</li>
+					</ul>
+				</p>
+				<p>
+					The idea is that if some vertices $u$ and $v$ are not too distant from each other, then either $u \in \bunch{v}$, or there is some $w$ that is in both $\bunch{u}$ and $\bunch{v}$ and is not too far from either of them. In our algorithm, we use the vertex in $A$ that is nearest to $v$, which we denote $\p{v}$.
+				</p>
+				<!-- TODO: Add visualization -->
+				<p>
+					Once we have done our preprocessing, when we receive a query for the shortest distance between some $u$ and $v$, we do the following:
+					<ol>
+						<li>If $u \in \bunch{v}$, then we have already calculated $\dist{u}{v}$, so just return $\dist{u}{v}$.</li>
+						<li>Otherwise, choose $\p{v}$ to be the vertex in $A$ that is nearest to $v$. We know that $\p{v} \in \bunch{u}$ because $A \subseteq \bunch{u}$, so return $\dist{u}{\p{v}} + \dist{\p{v}}{v}$.</li>
+					</ol>
+				</p>
+				<p>
+					Now let's consider how good of an approximation this gives us. If $u \in \bunch{v}$, then we get an exact answer, so suppose that $u \not\in \bunch{v}$. Because we choose $w$ to be the nearest vertex in $A$ to $v$, anything that is nearer to $v$ than $w$ is in $\bunch{v}$, and since $u \not\in \bunch{v}$, we know that $\dist{w}{v} < \dist{u}{v}$. Since we can follow a path from $u$ to $v$ to $w$, and the shortest path from $u$ to $w$ is at least as short as that path, we know that
+					$$\begin{aligned}
+						\dist{u}{w}	&\le \dist{u}{v} + \dist{v}{w} \\
+									&\lt   \dist{u}{v} + \dist{u}{v} \\
+									&=   2\cdot \dist{u}{v}.
+					\end{aligned}$$
+					Finally, we see that
+					$$\begin{aligned}
+						\dist{u}{w} + \dist{w}{v}	&\lt 2\cdot \dist{u}{v} + \dist{u}{v} \\
+													&= 3 \cdot \dist{u}{v}.
+					\end{aligned}$$
+				</p>
+				<p>
+					In other words, our approximation is at most three times the actual value! Of course, this is all assuming that we can efficiently perform our preprocessing.
+				</p>
+				<section>
+					<h3>Preprocessing</h3>
+					<p>
+						For each vertex $v$, we need to know the shortest distances
+						<ol>
+							<li>from $v$ to each vertex in $A$, and</li>
+							<li>from $v$ to each vertex that is nearer to $v$ than any vertex in $A$.</li>
+						</ol>
+					</p>
+					<p>
+						We can find the first set of distances by running Dijkstra's algorithm from each vertex in $A$. Recall that our query algorithm needs to know for each $v$ the distance to $\p{v}$, the nearest vertex in $A$ to $v$. We can calculate and store this information as we run Dijkstra's algorithm. Before we find the second set of vertices, it would help to know how close each vertex is to its nearest vertex in $A$. For a vertex $v$, we denote this distance as $\dist{v}{A}$. It turns out that we can find all such distances with a single run of Dijkstra's algorithm: we add a new vertex $s$ to the graph, and add edges of cost 0 from $s$ to each vertex in $A$. For any vertex $v$, a path from $v$ to $s$ must take some edge from a vertex in $A$ to $s$, and since all such edges have weight 0, the shortest distance from $v$ to $s$ must be the same as the shortest distance from $v$ to any vertex in $A$.
+					</p>
+					<!-- TODO: Add visualization -->
+					<p>
+						We could find the second set of distances by running Dijkstra's algorithm from each vertex, but that just means solving APSP, so we need something more efficient. First, we can notice that we are only searching for distances from vertices in $V$ to vertices in $V \setminus A$, so instead of running Dijkstra's algorithm from every $v \in V$, we can run it from every $w \in V \setminus A$. Second, we do not need to know the distances from each $w \in V \setminus A$ to every vertex in the graph; we only need the distances from each $w \in V \setminus A$ to the vertices $v$ such that $\dist{v}{w} < \dist{v}{A}$. This means that we can run a modified version of Dijkstra's algorithm that only finds these distances. Recall that Dijkstra's algorithm maintains shortest distance estimates for each vertex, and that when we update a vertex's shortest distance estimate, we enqueue the vertex with priority equal to its shortest distance estimate. In our modified version of Dijkstra's algorithm, we only update the shortest distance estimate of a vertex $v$, and only enqueue $v$, if the new shortest distance estimate is less than $\dist{v}{A}$. This ensures that we only calculate the distances we need to know, and once we have those distances, we can store them in a hash table for easy lookup later on. To recount, given a graph $G = (V, E)$, our entire preprocessing algorithm is as follows:
+						<ol>
+							<li><b>Create set $A$:</b> Initialize $A \gets \varnothing$. For each $v \in V$, add $v$ to $A$ with probability $q$.</li>
+							<li><b>Calculate distances from each $w \in A$:</b> For each $w \in A$, run Dijkstra's algorithm from $w$ and store the distances obtained.</li>
+							<li><b>Calculate $\dist{v}{A}$ and $\p{v}$ for each $v \in V$:</b> Add a vertex $s$ to the graph, and add edges of weight 0 from $s$ to each vertex in $A$. Run Dijkstra's algorithm from $s$ to find each $\dist{v}{A}$ and $\p{v}$.</li>
+							<li><b>Find bunches and calculate distances to nearby vertices:</b> Initialize $\bunch{v} \gets A$ for each $v \in V$. For each $w \in V \setminus A$, run a modified version of Dijkstra's algorithm from $w$: when we are about to update the shortest distance estimate of some vertex $v$ and enqueue $v$, only do so if that estimate is less than $\dist{v}{A}$. If we do update the estimate of a vertex $v$, add $w$ to $\bunch{v}$.</li>
+						</ol>
+					</p>
+				</section>
+				<section>
+					<h3>Runtime and Space Analysis</h3>
+					<p>
+						Notice first that query time is constant: we lookup no more than two distances, and we can lookup the closest vertex in $A$ to each vertex if we store this information during preprocessing. Now we analyze preprocessing. Let $n$ be the number of vertices and $m$ be the number of edges. The first step clearly runs in time $\bigo{n}$. To analyze step 2, it is useful to know the expected size of $A$. Let $q$ be the probability we use to decide if we should include each vertex in $A$. Then we see that $\ev{\abs{A}} = qn$. Since Dijkstra's algorithm runs in $\bigo{m}$ time, step 2 has expected runtime $\bigo{qmn}$. Step 3 is just a single run of Dijkstra's algorithm, so it runs in time $\bigo{m}$. To analyze step 4, first note that in our modified version of Dijkstra's algorithm from start vertex $w$, we only visit vertices $v$ where $\dist{v}{w} \lt \dist{v}{A}$, and at each vertex $v$ we visit, we consider all the edges out of $v$, which is upward bounded by $m$. Thus, the runtime of step 4 is bounded by
+						$$\begin{aligned}
+							\sum_{w \in V \setminus A} \abs{\curl{v \in V \mid \dist{v}{w} \lt \dist{v}{A}}} \cdot \bigo{m}
+								&= \sum_{v \in V} \abs{\curl{w \in V \setminus A \mid \dist{v}{w} \lt \dist{v}{A}}} \cdot \bigo{m} \\
+								&= \sum_{v \in V} \abs{\bunch{v} \setminus A} \cdot \bigo{m}.
+						\end{aligned}$$
+						Then, it is helpful to know $\ev{\abs{\bunch{v} \setminus A}}$ for each $v$. To figure this out, fix some vertex $v \in V$, and let $w_1, w_2, \dots w_n $ be the vertices in non-decreasing order by distance from $v$. Then we see that
+						$$\begin{aligned}
+							\prob{w_i \in \bunch{v} \setminus A}	&= \prob{w_1, \dots, w_i \not \in A} \\
+																	&= (1-q)^i.
+						\end{aligned}$$
+						Now let $\ind{w_i \in \bunch{v} \setminus A}$ be an indicator that is 1 if $w_i \in \bunch{v} \setminus A$ and 0 otherwise. Then we have
+						$$\begin{aligned}
+							\ev{\abs{\bunch{v} \setminus A}}	&= \ev{\sum_{i=1}^n \ind{w_i \in \bunch{v} \setminus A}} \\
+																&= \sum_{i=1}^n \prob{w_i \in \bunch{v} \setminus A} \\
+																&\le \sum_{i=1}^n (1-q)^i.
+						\end{aligned}$$
+						Notice that this is a geometric series, so it is upward bounded by $\frac{1-q}{1-(1-q)} = \frac{1-q}{q} \le \frac{1}{q}$, and thus $\ev{\abs{\bunch{v} \setminus A}} \le \frac{1}{q}$. Finally, this tells us that the expected runtime of step 4 is bounded by
+						$$\begin{aligned}
+							\sum_{v \in V} \ev{\abs{\bunch{v} \setminus A}} \cdot \bigo{m}	&= \sum_{v \in V} \frac{1}{q} \cdot \bigo{m} \\
+																							&= \bigo{\frac{mn}{q}}.
+						\end{aligned}$$
+						This means that the overall runtime of preprocessing is $\bigo{qmn + \frac{mn}{q}} = \bigo{mn\paren{q + \frac{1}{q}}}$, and we are left with choosing $q$ in terms of $m$ and $n$ to minimize $\bigo{q + \frac{1}{q}}$. It turns out that choosing $q = n^{-1/2}$ is optimal, and our runtime is $\bigo{mn^{1/2}}$, which is more optimal than the $\bigotilde{mn}$ achieved by APSP algorithms. Hooray!
+					</p>
+					<p>
+						Given what we know from our runtime analysis, our analysis of the size of the data structure produced is much simpler. For each vertex $v$, our data structure stores $\p{v}$, and the distance from $v$ to each vertex in $\bunch{v}$. Recall from our runtime analysis that
+						$$\begin{aligned}
+							\ev{\abs{A}}						\quad &= \quad qn			&= \qquad n^{1/2}& \\
+							\ev{\abs{\bunch{v} \setminus A}}	\quad &= \quad \frac{1}{q}	&= \qquad n^{1/2}&,
+						\end{aligned}$$
+						and thus we see that $\ev{\abs{\bunch{v}}} = 2n^{1/2}$, and the expected size of our data structure is $\bigo{n \cdot n^{1/2}} = \bigo{n^{3/2}}$.
+					</p>
+				</section>
+			</div>
+		</section>
+
+		<section class="main style1">
+			<div class="container">
+				<h2>Third Attempt: A more general structure</h2>
+				<!-- TODO: write algorithm -->
+				<section>
+					<h3>Runtime and Space Analysis</h3>
+					<p>
+						Notice that our query time is now $\bigo{k}$, which, if we treat $k$ as a constant, is constant time. Now we analyze preprocessing. Let $n$ be the number of vertices and $m$ be the number of edges. As in <!-- TODO: Link section -->, we can analyze preprocessing time by finding the expected size of each $\bunch{v}$. In particular, for each $0 \le i \lt k$, when we run Dijkstra's algorithm from a vertex $w \in A_i \setminus A_{i+1}$, we only visit the vertices $v$ where $\dist{v}{w} \lt \dist{v}{A_{i+1}}$. At each vertex we visit, we consider $\bigo{m}$ edges, thus our runtime is bounded by
+						$$\begin{aligned}
+							\sum_{i=0}^{k-1} \sum_{w \in A_i \setminus A_{i+1}} \abs{\curl{v \in A_i \mid \dist{v}{w} \lt \dist{v}{A_{i+1}}}} \cdot \bigo{m}
+								&= \sum_{v \in A_i} \sum_{i=0}^{k-1} \abs{\curl{w \in A_i \setminus A_{i+1} \mid \dist{v}{w} \lt \dist{v}{A_{i+1}}}} \cdot \bigo{m} \\
+								&= \sum_{v \in A_i} \abs{\bigcup_{i=0}^{k-1} \curl{w \in A_i \setminus A_{i+1} \mid \dist{v}{w} \lt \dist{v}{A_{i+1}}}} \cdot \bigo{m} \\
+								&= \sum_{v \in V} \abs{\bunch{v}} \cdot \bigo{m}.
+						\end{aligned}$$
+						This time, each $\bunch{v}$ is defined a bit differently, so the expected size of $\bunch{v}$ is different. Notice that we can express $\bunch{v}$ as
+						$$\begin{aligned}
+							\bunch{v}	&= \bigcup_{i=0}^{k-1} \curl*{w \in A_i \setminus A_{i+1} \mid \dist{v}{w} \lt \dist{v}{A_{i+1}}} \\
+										&= \bigcup_{i=0}^{k-1} (\bunch{v} \cap A_i).
+						\end{aligned}$$
+						Thus, if we can upward bound the expected size of each $\bunch{v} \cap A_i$, we can upward bound the size of $\bunch{v}$. We proceed similarly as we did in \cref{ss:analysis-k2}. Fix some $i$, and let $w_1, w_2, \dots, w_\ell$ be the vertices of $A_i$ in non-decreasing order of distance from $v$. Then we see that
+						$$\begin{aligned}
+						\prob{w_j \in \bunch{v} \cap A_i}	&= \prob{w_1, \dots, w_j \not\in A_{i+1}} \\
+															&= (1-q)^j.
+						\end{aligned}$$
+						Now let $\ind{w_j \in \bunch{v} \cap A_i}$ be an indicator that is 1 if $w_i \in \bunch{v} \cap A_i$ and 0 otherwise. Then we have
+						$$\begin{aligned}
+							\ev{\abs{\bunch{v} \cap A_i}}	&= \ev{\sum_{j=1}^\ell \ind{w_j \in \bunch{v} \cap A_i}} \\
+															&= \sum_{j=1}^\ell \prob{w_i \in \bunch{v} \cap A_i} \\
+															&\le \sum_{j=1}^\ell (1-q)^j.
+						\end{aligned}$$
+						Notice that this is a geometric series, so it is upward bounded by $\frac{1-q}{1-(1-q)} = \frac{1-q}{q} \le \frac{1}{q}$, and thus $\ev{\abs{\bunch{v} \cap A_i}} \le \frac{1}{q}$. This means that
+						$$\begin{aligned}
+						\ev{\abs{\bunch{v}}} &= \ev{\abs{\bigcup_{i=0}^{k-1} (\bunch{v} \cap A_i)}}
+							&= \ev{\sum_{i=0}^{k-1} \abs{\bunch{v} \cap A_i}} \\
+							&= \sum_{i=0}^{k-1} \ev{\abs{\bunch{v} \cap A_i}} \\
+							&\le \sum_{i=0}^{k-1} \frac{1}{q} \\
+							&= \frac{k}{q}.
+						\end{aligned}$$
+						Thus, our overall expected runtime for preprocessing is
+						$$\begin{aligned}
+						\ev{\sum_{v \in V} \abs{\bunch{v}} \cdot \bigo{m}}
+							&= \sum_{v \in V} \ev{\abs{\bunch{v}}} \cdot \bigo{m} \\
+							&= \sum_{v \in V} \frac{k}{q} \cdot \bigo{m} \\
+							&= \bigo{\frac{km}{q}}.
+						\end{aligned}$$
+						Choosing $q = n^{-1/k}$ <!-- TODO: why this choice of $q$? -->, this gives us a runtime of $\bigo{kmn^{1/k}}$.
+					</p>
+					<p>
+						Given what we know from our runtime analysis, our analysis of the size of the data structure produced is much simpler. For each vertex $v$, our data structure stores each $\pp{i}{v}$, and the distance from $v$ to each vertex in $\bunch{v}$. Recall from our runtime analysis that $\ev{\abs{\bunch{v}}} = \frac{k}{q}$, and thus we see that the expected size of our data structure is $\bigo{n \cdot \frac{k}{q}} = \bigo{n \cdot \frac{k}{n^{-1/k}}} = \bigo{kn^{1 + 1/k}}$.
+					</p>
+				</section>
 			</div>
 		</section>
 
