@@ -56,7 +56,8 @@
 					"\\pp": "p_{#1} \\paren{#2}",
 					"\\bunch": "B \\paren{#1}",
 					"\\cluster": "C \\paren{#1}",
-					"\\ind": "\\operatorname*{\\textbf{1} \\sqbr{#1}}"
+					"\\ind": "\\operatorname*{\\textbf{1}} \\sqbr{#1}",
+					"\\edges": "\\operatorname*{\\mathcal{E}} \\paren{#1}",
 				}
 			};
 		</script>
@@ -180,11 +181,11 @@
 				<section>
 					<h3>Runtime and Space Analysis</h3>
 					<p>
-						Notice first that query time is constant: we lookup no more than two distances, and we can lookup the closest vertex in $A$ to each vertex if we store this information during preprocessing. Now we analyze preprocessing. Let $n$ be the number of vertices and $m$ be the number of edges. The first step clearly runs in time $\bigo{n}$. To analyze step 2, it is useful to know the expected size of $A$. Let $q$ be the probability we use to decide if we should include each vertex in $A$. Then we see that $\ev{\abs{A}} = qn$. Since Dijkstra's algorithm runs in $\bigo{m}$ time, step 2 has expected runtime $\bigo{qmn}$. Step 3 is just a single run of Dijkstra's algorithm, so it runs in time $\bigo{m}$. To analyze step 4, first note that in our modified version of Dijkstra's algorithm from start vertex $w$, we only visit vertices $v$ where $\dist{v}{w} \lt \dist{v}{A}$, and at each vertex $v$ we visit, we consider all the edges out of $v$, which is upward bounded by $m$. Thus, the runtime of step 4 is bounded by
+						Notice first that query time is constant: we lookup no more than two distances, and we can lookup the closest vertex in $A$ to each vertex if we store this information during preprocessing. Now we analyze preprocessing. Let $n$ be the number of vertices and $m$ be the number of edges. The first step clearly runs in time $\bigo{n}$. To analyze step 2, it is useful to know the expected size of $A$. Let $q$ be the probability we use to decide if we should include each vertex in $A$. Then we see that $\ev{\abs{A}} = qn$. Since Dijkstra's algorithm runs in $\bigo{m}$ time, step 2 has expected runtime $\bigo{qmn}$. Step 3 is just a single run of Dijkstra's algorithm, so it runs in time $\bigo{m}$. To analyze step 4, first note that in our modified version of Dijkstra's algorithm from start vertex $w$, we only visit vertices $v$ where $\dist{v}{w} \lt \dist{v}{A}$, and at each vertex $v$ we visit, we consider all the edges that touch $v$. We denote the set of edges that touch $v$ as $\edges{v}$. Thus, the runtime of step 4 is bounded by
 						$$\begin{aligned}
-							\sum_{w \in V \setminus A} \abs{\curl{v \in V \mid \dist{v}{w} \lt \dist{v}{A}}} \cdot \bigo{m}
-								&= \sum_{v \in V} \abs{\curl{w \in V \setminus A \mid \dist{v}{w} \lt \dist{v}{A}}} \cdot \bigo{m} \\
-								&= \sum_{v \in V} \abs{\bunch{v} \setminus A} \cdot \bigo{m}.
+							\sum_{w \in V \setminus A} \sum_{\substack{v \in V \\ \dist{v}{w} \lt \dist{v}{A}}} \abs{\edges{v}}
+								&= \sum_{v \in V} \sum_{\substack{w \in V \setminus A \\ \dist{v}{w} \lt \dist{v}{A}}} \abs{\edges{v}} \\
+								&= \sum_{v \in V} \abs{\bunch{v} \setminus A} \cdot \abs{\edges{v}}.
 						\end{aligned}$$
 						Then, it is helpful to know $\ev{\abs{\bunch{v} \setminus A}}$ for each $v$. To figure this out, fix some vertex $v \in V$, and let $w_1, w_2, \dots w_n $ be the vertices in non-decreasing order by distance from $v$. Then we see that
 						$$\begin{aligned}
@@ -199,10 +200,11 @@
 						\end{aligned}$$
 						Notice that this is a geometric series, so it is upward bounded by $\frac{1-q}{1-(1-q)} = \frac{1-q}{q} \le \frac{1}{q}$, and thus $\ev{\abs{\bunch{v} \setminus A}} \le \frac{1}{q}$. Finally, this tells us that the expected runtime of step 4 is bounded by
 						$$\begin{aligned}
-							\sum_{v \in V} \ev{\abs{\bunch{v} \setminus A}} \cdot \bigo{m}	&= \sum_{v \in V} \frac{1}{q} \cdot \bigo{m} \\
-																							&= \bigo{\frac{mn}{q}}.
+							\sum_{v \in V} \ev{\abs{\bunch{v} \setminus A}} \cdot \abs{\edges{v}}	&\le \sum_{v \in V} \frac{1}{q} \cdot \abs{\edges{v}} \\
+																									&= \frac{1}{q} \cdot \sum_{v \in V} \abs{\edges{v}} \\
+																									&= \frac{1}{q} \cdot 2m.
 						\end{aligned}$$
-						This means that the overall runtime of preprocessing is $\bigo{qmn + \frac{mn}{q}} = \bigo{mn\paren{q + \frac{1}{q}}}$, and we are left with choosing $q$ in terms of $m$ and $n$ to minimize $\bigo{q + \frac{1}{q}}$. It turns out that choosing $q = n^{-1/2}$ is optimal, and our runtime is $\bigo{mn^{1/2}}$, which is more optimal than the $\bigotilde{mn}$ achieved by APSP algorithms. Hooray!
+						This means that the overall runtime of preprocessing is $\bigo{qmn + \frac{m}{q}} = \bigo{m\paren{qn + \frac{1}{q}}}$, and we are left with choosing $q$ in terms of $m$ and $n$ to minimize $\bigo{qn + \frac{1}{q}}$. It turns out that choosing $q = n^{-1/2}$ is optimal, and our runtime is $\bigo{mn^{1/2}}$, which is more optimal than the $\bigotilde{mn}$ achieved by APSP algorithms. Hooray!
 					</p>
 					<p>
 						Given what we know from our runtime analysis, our analysis of the size of the data structure produced is much simpler. For each vertex $v$, our data structure stores $\p{v}$, and the distance from $v$ to each vertex in $\bunch{v}$. Recall from our runtime analysis that
@@ -223,48 +225,54 @@
 				<section>
 					<h3>Runtime and Space Analysis</h3>
 					<p>
-						Notice that our query time is now $\bigo{k}$, which, if we treat $k$ as a constant, is constant time. Now we analyze preprocessing. Let $n$ be the number of vertices and $m$ be the number of edges. As in <!-- TODO: Link section -->, we can analyze preprocessing time by finding the expected size of each $\bunch{v}$. In particular, for each $0 \le i \lt k$, when we run Dijkstra's algorithm from a vertex $w \in A_i \setminus A_{i+1}$, we only visit the vertices $v$ where $\dist{v}{w} \lt \dist{v}{A_{i+1}}$. At each vertex we visit, we consider $\bigo{m}$ edges, thus our runtime is bounded by
+						Notice that our query time is now $\bigo{k}$, which, if we treat $k$ as a constant, is constant time. Now we analyze preprocessing. Let $n$ be the number of vertices and $m$ be the number of edges. As in <!-- TODO: Link section -->, we can analyze preprocessing time by finding the expected size of $\bunch{v}$ for each vertex $v$. In particular, for each $0 \le i \lt k$, when we run Dijkstra's algorithm from a vertex $w \in A_i \setminus A_{i+1}$, we only visit the vertices $v$ where $\dist{v}{w} \lt \dist{v}{A_{i+1}}$. At each vertex $v$ that we visit, we consider the edges that touch $v$, the set of which we denote $\edges{v}$. Thus, our runtime is bounded by
 						$$\begin{aligned}
-							\sum_{i=0}^{k-1} \sum_{w \in A_i \setminus A_{i+1}} \abs{\curl{v \in A_i \mid \dist{v}{w} \lt \dist{v}{A_{i+1}}}} \cdot \bigo{m}
-								&= \sum_{v \in A_i} \sum_{i=0}^{k-1} \abs{\curl{w \in A_i \setminus A_{i+1} \mid \dist{v}{w} \lt \dist{v}{A_{i+1}}}} \cdot \bigo{m} \\
-								&= \sum_{v \in A_i} \abs{\bigcup_{i=0}^{k-1} \curl{w \in A_i \setminus A_{i+1} \mid \dist{v}{w} \lt \dist{v}{A_{i+1}}}} \cdot \bigo{m} \\
-								&= \sum_{v \in V} \abs{\bunch{v}} \cdot \bigo{m}.
+							\sum_{i=0}^{k-1} \sum_{w \in A_i \setminus A_{i+1}} \sum_{\substack{v \in A_i \\ \dist{v}{w} \lt \dist{v}{A_{i+1}}}} \abs{\edges{v}}
+								&= \sum_{v \in A_i} \sum_{i=0}^{k-1} \sum_{\substack{w \in A_i \setminus A_{i+1} \\ \dist{v}{w} \lt \dist{v}{A_{i+1}}}} \abs{\edges{v}} \\
+								&= \sum_{v \in A_i} \abs{\bigcup_{i=0}^{k-1} \curl{w \in A_i \setminus A_{i+1} \mid \dist{v}{w} \lt \dist{v}{A_{i+1}}}} \cdot \abs{\edges{v}} \\
+								&= \sum_{v \in V} \abs{\bunch{v}} \cdot \abs{\edges{v}}.
 						\end{aligned}$$
 						This time, each $\bunch{v}$ is defined a bit differently, so the expected size of $\bunch{v}$ is different. Notice that we can express $\bunch{v}$ as
 						$$\begin{aligned}
-							\bunch{v}	&= \bigcup_{i=0}^{k-1} \curl*{w \in A_i \setminus A_{i+1} \mid \dist{v}{w} \lt \dist{v}{A_{i+1}}} \\
-										&= \bigcup_{i=0}^{k-1} (\bunch{v} \cap A_i).
+							\bunch{v}	&= \bigcup_{i=0}^{k-1} \curl{w \in A_i \setminus A_{i+1} \mid \dist{v}{w} \lt \dist{v}{A_{i+1}}} \\
+										&= \bigcup_{i=0}^{k-1} (\bunch{v} \cap \paren{A_i \setminus A_{i+1}}).
 						\end{aligned}$$
-						Thus, if we can upward bound the expected size of each $\bunch{v} \cap A_i$, we can upward bound the size of $\bunch{v}$. We proceed similarly as we did in \cref{ss:analysis-k2}. Fix some $i$, and let $w_1, w_2, \dots, w_\ell$ be the vertices of $A_i$ in non-decreasing order of distance from $v$. Then we see that
+						Thus, if we can upward bound the expected size of each $\bunch{v} \cap \paren{A_i \setminus A_{i+1}}$, we can upward bound the size of $\bunch{v}$. We proceed similarly as we did in <!-- TODO: link section -->. Recall that $A_k = \varnothing$, which means that $\dist{v}{A_k} = \infty$ and therefore that $A_{k-1} \subseteq \bunch{v}$. This means that $\abs{\bunch{v} \cap \paren{A_{k-1} \setminus A_k}} = \abs{A_{k-1}}$. We see that
 						$$\begin{aligned}
-						\prob{w_j \in \bunch{v} \cap A_i}	&= \prob{w_1, \dots, w_j \not\in A_{i+1}} \\
-															&= (1-q)^j.
+							\ev{\abs{\bunch{v} \cap \paren{A_{k-1} \setminus A_k}}}	&= \ev{\abs{A_{k-1}}} \\
+																					&= q^{k-1}n.
 						\end{aligned}$$
-						Now let $\ind{w_j \in \bunch{v} \cap A_i}$ be an indicator that is 1 if $w_i \in \bunch{v} \cap A_i$ and 0 otherwise. Then we have
+						Now we must find $\ev{\abs{\bunch{v} \cap \paren{A_i} \setminus A_{i+1}}}$ for each $i \lt k-1$. Fix some $i \lt k-1$, and let $w_1, w_2, \dots, w_\ell$ be the vertices of $A_i$ in non-decreasing order of distance from $v$. Then we see that
 						$$\begin{aligned}
-							\ev{\abs{\bunch{v} \cap A_i}}	&= \ev{\sum_{j=1}^\ell \ind{w_j \in \bunch{v} \cap A_i}} \\
-															&= \sum_{j=1}^\ell \prob{w_i \in \bunch{v} \cap A_i} \\
-															&\le \sum_{j=1}^\ell (1-q)^j.
+						\prob{w_j \in \bunch{v} \cap {A_i \setminus A_{i+1}}}	&= \prob{w_1, \dots, w_j \not\in A_{i+1}} \\
+																				&= (1-q)^j.
 						\end{aligned}$$
-						Notice that this is a geometric series, so it is upward bounded by $\frac{1-q}{1-(1-q)} = \frac{1-q}{q} \le \frac{1}{q}$, and thus $\ev{\abs{\bunch{v} \cap A_i}} \le \frac{1}{q}$. This means that
+						Now let $\ind{w_j \in \bunch{v} \cap \paren{A_i \setminus A_{i+1}}}$ be an indicator that is 1 if $w_i \in \bunch{v} \cap \paren{A_i \setminus A_{i+1}}$ and 0 otherwise. Then we have
 						$$\begin{aligned}
-						\ev{\abs{\bunch{v}}} &= \ev{\abs{\bigcup_{i=0}^{k-1} (\bunch{v} \cap A_i)}}
-							&= \ev{\sum_{i=0}^{k-1} \abs{\bunch{v} \cap A_i}} \\
-							&= \sum_{i=0}^{k-1} \ev{\abs{\bunch{v} \cap A_i}} \\
-							&\le \sum_{i=0}^{k-1} \frac{1}{q} \\
-							&= \frac{k}{q}.
+							\ev{\abs{\bunch{v} \cap \paren{A_i \setminus A_{i+1}}}}	&= \ev{\sum_{j=1}^\ell \ind{w_j \in \bunch{v} \cap \paren{A_i \setminus A_{i+1}}}} \\
+																					&= \sum_{j=1}^\ell \prob{w_i \in \bunch{v} \cap \paren{A_i \setminus A_{i+1}}} \\
+																					&\le \sum_{j=1}^\ell (1-q)^j.
+						\end{aligned}$$
+						Notice that this is a geometric series, so it is upward bounded by $\frac{1-q}{1-(1-q)} = \frac{1-q}{q} \le \frac{1}{q}$, and thus $\ev{\abs{\bunch{v} \cap \paren{A_i \setminus A_{i+1}}}} \le \frac{1}{q}$. This means that
+						$$\begin{aligned}
+						\ev{\abs{\bunch{v}}} &= \ev{\abs{\bigcup_{i=0}^{k-1} (\bunch{v} \cap \paren{A_i \setminus A_{i+1}})}} \\
+							&= \ev{\sum_{i=0}^{k-1} \abs{\bunch{v} \cap \paren{A_i \setminus A_{i+1}}}} \\
+							&= \sum_{i=0}^{k-1} \ev{\abs{\bunch{v} \cap \paren{A_i \setminus A_{i+1}}}} \\
+							&\le q^{k-1}n + \sum_{i=0}^{k-2} \frac{1}{q} \\
+							&= q^{k-1}n + \frac{k-1}{q}.
 						\end{aligned}$$
 						Thus, our overall expected runtime for preprocessing is
 						$$\begin{aligned}
-						\ev{\sum_{v \in V} \abs{\bunch{v}} \cdot \bigo{m}}
-							&= \sum_{v \in V} \ev{\abs{\bunch{v}}} \cdot \bigo{m} \\
-							&= \sum_{v \in V} \frac{k}{q} \cdot \bigo{m} \\
-							&= \bigo{\frac{km}{q}}.
+						\ev{\sum_{v \in V} \abs{\bunch{v}} \cdot \edges{v}}
+							&= \sum_{v \in V} \ev{\abs{\bunch{v}}} \cdot \edges{v} \\
+							&\le \sum_{v \in V} \paren{q^{k-1}n + \frac{k-1}{q}} \cdot \edges{v} \\
+							&= \paren{q^{k-1}n + \frac{k-1}{q}} \cdot \sum_{v \in V} \edges{v} \\
+							&= \paren{q^{k-1}n + \frac{k-1}{q}} \cdot 2m.
 						\end{aligned}$$
-						Choosing $q = n^{-1/k}$ <!-- TODO: why this choice of $q$? -->, this gives us a runtime of $\bigo{kmn^{1/k}}$.
+						This gives a runtime of $\bigo{\paren{q^{k-1}n + \frac{k-1}{q}} \cdot m}$, so we must choose $q$ in terms of $n$ to minimize $q^{k-1}n + \frac{k-1}{q}$. Choosing $q = n^{-1/k}$, this gives us a runtime of $\bigo{\paren{\paren{n^{-1/k}}^{k-1}n + \frac{k-1}{n^{-1/k}}} \cdot m} = \bigo{\paren{\paren{n^{-1/k}}^k + kn^{1/k}}\cdot m} =\bigo{kmn^{1/k}}$.
 					</p>
 					<p>
-						Given what we know from our runtime analysis, our analysis of the size of the data structure produced is much simpler. For each vertex $v$, our data structure stores each $\pp{i}{v}$, and the distance from $v$ to each vertex in $\bunch{v}$. Recall from our runtime analysis that $\ev{\abs{\bunch{v}}} = \frac{k}{q}$, and thus we see that the expected size of our data structure is $\bigo{n \cdot \frac{k}{q}} = \bigo{n \cdot \frac{k}{n^{-1/k}}} = \bigo{kn^{1 + 1/k}}$.
+						Given what we know from our runtime analysis, our analysis of the size of the data structure produced is much simpler. For each vertex $v$, our data structure stores each $\pp{i}{v}$, and the distance from $v$ to each vertex in $\bunch{v}$. Recall from our runtime analysis that $\ev{\abs{\bunch{v}}} \le q^{k-1}n + \frac{k-1}{q} = \bigo{kn^{1/k}}$, and thus we see that the expected size of our data structure is $\bigo{n \cdot kn^{1/k}} = \bigo{kn^{1 + 1/k}}$.
 					</p>
 				</section>
 			</div>
