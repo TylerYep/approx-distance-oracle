@@ -125,7 +125,9 @@ class ApproxDistanceOracle:
         q = [(0, (src, None))]
         distances = [0 if v == src else INF for v in self.V]
         witnesses = [INF for v in self.V]
-        first = True
+        for w, c in enumerate(self.E[src]):
+            if c == 0:
+                witnesses[w] = w
         while q:
             (cost, (u, w)) = heapq.heappop(q)
             if cost > distances[u]:
@@ -133,12 +135,11 @@ class ApproxDistanceOracle:
             for v, c in enumerate(self.E[u]):
                 prev = distances[v]
                 nxt = cost + c
+                # Because this is "strictly less than", we do not have to worry
+                # about vertices in A_i ending up with src as their witnesses.
                 if nxt < prev:
-                    if first:
-                        w = v
-                        first = False
                     distances[v] = nxt
-                    witnesses[v] = w
+                    witnesses[v] = witnesses[w]
                     heapq.heappush(q, (nxt, (v, w)))
         d = distances if dst is None else distances[dst]
         w = witnesses if dst is None else witnesses[dst]
