@@ -1,5 +1,9 @@
 """
 ADO for Finite Metric Spaces
+This code is largely untested. You can look in tests/ to see some examples, or
+run them using `pytest -vv`.
+
+It seems to work fine, but take that with a grain of salt.
 """
 from typing import Dict, List, Set
 import math
@@ -103,7 +107,6 @@ def weighted_coin_flip(prob):
 
 
 if __name__ == "__main__":
-    random.seed(0)
     distance_matrix = [
         [0, 1, 0, 5],
         [1, 0, 0, 0],

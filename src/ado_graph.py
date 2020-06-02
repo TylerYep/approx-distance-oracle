@@ -28,7 +28,7 @@ class ApproxDistanceOracle:
         """
         Preprocessing step.
 
-        Note that
+        Note that:
             self.p represents witnesses
             self.a_i_v_distances represents delta(A_i, v)
 
