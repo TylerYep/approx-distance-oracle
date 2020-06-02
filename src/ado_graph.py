@@ -1,6 +1,5 @@
 from typing import Dict, List, Set
 from dataclasses import dataclass
-from collections import defaultdict
 import random
 import math
 import heapq
@@ -32,44 +31,72 @@ class ApproxDistanceOracle:
         """
         self.E = E
         self.V = V
-        self.k = k
         self.n = len(V)  # number of vertices
-        self.delta: Dict[Vertex, List[int]] = defaultdict(list)
-        self.witnesses: Dict[int, List[int]] = {}
+
+        self.delta: Dict[Vertex, List[int]] = {}
+        self.p: Dict[int, List[int]] = {}
         self.A: List[Set[Vertex]] = [None for _ in range(k + 1)]
-        self.delta_set: Dict[int, List[int]] = defaultdict(list)
+        self.a_i_v_distances: List[int, Dict[Vertex, int]] = [None for _ in range(k+1)]
 
         # Construct the A_i samples
         self.A[0] = V
         self.A[k] = set()
         for i in range(1, k):  # for i = 1 to k - 1
             prob = self.n ** (-1 / k)
-            self.A[i] = [x for x in self.A[i - 1] if weighted_coin_flip(prob)]
+            self.A[i] = {x for x in self.A[i - 1] if weighted_coin_flip(prob)}
 
-        # Initialize delta_set of A_k to INF
-        self.delta_set[self.k] = [{v: INF for v in self.V}]
-        self.witnesses[self.k] = None
+        # Initialize a_i_v_distances of A_k to INF
+        self.a_i_v_distances[k] = {v: INF for v in self.V}
+        self.p[k] = None
 
         print(f"V: {self.V}")
         print(f"E: {self.E}")
 
-        for i in range(k - 1, -1, -1):  # for i = k - 1 downto 0
+        self.C: Dict[Vertex, Set[Vertex]] = {}
+
+        for i in range(k - 1, -1, -1):  # for i = k - 1 down to 0
             # Add new source vertex to A_i
             s = self.add_source(i)
+
             # Build shortest path trees
             # (ideally using Thorup[2000b] O(m))
             # but currently using Dijkstra's
-            print(self.A)
-            self.delta_set[i], self.witnesses[i] = self.distance_fn(s)
+            self.a_i_v_distances[i], self.p[i] = self.distance_fn(s)
+
             # Preserve that witnesses are in each bunch
             for v in self.V:
-                if self.delta_set[i][v] == self.delta_set[i + 1][v]:
-                    self.witnesses[i] = self.witnesses[i + 1]
-        for w in self.A[i] / self.A[i + 1]:
-            pass  # still working on this
+                if v != s and i + 1 < k:
+                    if self.a_i_v_distances[i][v] == self.a_i_v_distances[i + 1][v]:
+                        self.p[i] = self.p[i + 1]
+
+            for w in self.A[i] - self.A[i + 1]:
+                self.C[w] = {
+                    v
+                    for v in self.V
+                    if v != s and self.distance_fn(w, v)[0] < self.a_i_v_distances[i+1][v]
+                }
+
+        self.B: Dict[Vertex, Set[Vertex]] = {}
+        for v in self.V:
+            self.B[v] = set()
+            for i in range(k):
+                self.B[v] |= {w for w in self.V if v in self.C[w]}
+
+        self.hash_table = {}
+        for v, b_set in self.B.items():
+            for w in b_set:
+                self.hash_table[(w, v)] = self.distance_fn(w, v)[0]
+
 
     def query(self, u, v):
-        pass
+        w = u
+        i = 0
+        while w not in self.B[v]:
+            i += 1
+            u, v = v, u
+            w = self.p[i][u]
+        return self.hash_table[(w, u)] + self.hash_table[(w, v)]
+
 
     # Adds a source vertex that is connected with edge weight 0 to all
     # nodes in A_i. Returns the index of the added vertex
@@ -81,6 +108,7 @@ class ApproxDistanceOracle:
         s = self.n
         self.n += 1
         return s
+
 
     # Variant on Dijkstra's trying to also keep track of witnesses
     def distance_fn(self, src, dst=None):
@@ -104,7 +132,7 @@ class ApproxDistanceOracle:
                     heapq.heappush(q, (nxt, (v, w)))
         d = distances if dst is None else distances[dst]
         w = witnesses if dst is None else witnesses[dst]
-        print(d, w)
+        # print(d, w)
         return d, w
 
 
@@ -121,13 +149,19 @@ def argmin(a):
 
 
 if __name__ == "__main__":
+    random.seed(0)
     V: Set[Vertex] = set([i for i in range(4)])
     # INF means there is no edge between the vertices
     E: List[List[Vertex]] = [
-        [0, 1, 1, INF],
-        [1, 0, 1, INF],
-        [1, 1, 0, 1],
-        [INF, INF, 1, 0],
+        [1, 2, 3, 4],
+        [2, 2, 5, 6],
+        [3, 5, 7, 1],
+        [4, 6, 1, 9],
+
+        # [0, 1, 1, INF],
+        # [1, 0, 1, INF],
+        # [1, 1, 0, 1],
+        # [INF, INF, 1, 0],
     ]
 
     ado = ApproxDistanceOracle(V, E)

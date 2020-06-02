@@ -47,8 +47,8 @@ class ApproxDistanceOracle:
 
 
         """ Find minimum distances from each vertex to each other set. """
-        a_i_v_distances = [dict() for _ in range(k+1)]
-        self.p = [dict() for _ in range(k+1)]
+        a_i_v_distances: List[Dict[int]] = [dict() for _ in range(k+1)]
+        self.p: List[Dict[int]] = [dict() for _ in range(k+1)]
         self.B: Dict[int, Set[int]] = {}
 
         for v in V:
@@ -64,12 +64,10 @@ class ApproxDistanceOracle:
                     w for w in A[i] - A[i+1] if self.distance_fn(w, v) < a_i_v_distances[i+1][v]
                 }
 
-        self.hash_table = [[None] * n for _ in range(n)]
+        self.hash_table = {}
         for v, b_set in self.B.items():
             for w in b_set:
-                self.hash_table[w][v] = self.distance_fn(w, v)
-        print(self.hash_table)
-
+                self.hash_table[(w, v)] = self.distance_fn(w, v)
 
     def find_closest_vertex(self, A_i, v):
         """
@@ -86,7 +84,6 @@ class ApproxDistanceOracle:
                 closest_w = w
         return min_dist, closest_w
 
-
     def query(self, u, v):
         w = u
         i = 0
@@ -94,8 +91,7 @@ class ApproxDistanceOracle:
             i += 1
             u, v = v, u
             w = self.p[i][u]
-        return self.hash_table[w][u] + self.hash_table[w][v]
-
+        return self.hash_table[(w, u)] + self.hash_table[(w, v)]
 
     def distance_fn(self, u, v):
        return self.distance_matrix[u][v]

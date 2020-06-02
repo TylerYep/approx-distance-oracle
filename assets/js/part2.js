@@ -49,6 +49,7 @@ function createRandomPoints() {
     return pointData;
 }
 
+
 function createKSubsets(pointData) {
     let A = [pointData];
     for (let i = 1; i < k; i++) {
@@ -94,11 +95,11 @@ function main() {
     }
     drawLines(pointData);
     drawPoints(pointData);
-    tabulate(tableData, [...Array(tableData.length).keys()], [...Array(k).keys()]);
+    tabulate(tableData, [...Array(tableData.length).keys()], [...Array(k).keys()], pointData);
 }
 
 
-function tabulate(data, rowHeaders, columnHeaders) {
+function tabulate(data, rowHeaders, columnHeaders, pointData) {
 	const table = d3.select('#table-container').append('table');
 	const thead = table.append('thead');
 	const tbody = table.append('tbody');
@@ -119,16 +120,20 @@ function tabulate(data, rowHeaders, columnHeaders) {
         .text((_, i) => rowHeaders[i])
 
 	rows.selectAll('td')
-        .data(row => columnHeaders.map(col => ({
+        .data((row, r) => columnHeaders.map(col => ({
+            row: r,
             column: col,
             value: row[col],
         })))
         .enter()
         .append('td')
         .text(d => d.value)
-        .on("mouseover", function(d) {
-            // Needs to be a function to have access to "this".
-            console.log(d)
+        .on("mouseover", d => {
+            selected = [d.row];
+            drawLines(pointData);
+            drawCircles(pointData[d.row], pointData[d.value]);
+            drawPoints(pointData);
+
         })
         .on("mouseout", function(_) {
             // Needs to be a function to have access to "this".
@@ -139,14 +144,15 @@ function tabulate(data, rowHeaders, columnHeaders) {
 
 function drawLines(pointData) {
     const allPointPairs = d3.cross(pointData, pointData).filter(z => z[0].id == selected[0]);
-    svg.selectAll(".lines").data(allPointPairs).join(
+    svg.selectAll(".lines").data(allPointPairs, d => d.id).join(
         enter => enter.append("line")
+            .attr("class", "lines")
             .attr("stroke", "black")
             .attr("strokewidth", 5)
             .attr("x1", d => xscale(d[0].x))
             .attr("y1", d => yscale(d[0].y))
             .attr("x2", d => xscale(d[1].x))
-            .attr("y2", d => yscale(d[1].y)),
+            .attr("y2", d => yscale(d[1].y))
     );
 }
 
@@ -176,7 +182,7 @@ function drawPoints(pointData) {
                         selected = [];
                     } else {
                         selected[1] = d.id;
-                        drawCircles(pointData);
+                        drawCircles(pointData[selected[0]], pointData[selected[1]]);
                         drawPoints(pointData);
                     }
                 }
@@ -201,22 +207,27 @@ function drawPoints(pointData) {
 }
 
 
-function drawCircles(pointData) {
-    const centerPoint = pointData[selected[0]];
-    const radiusPoint = pointData[selected[1]];
-    svg.selectAll(".bigCircle").data([pointData[0]]).join(
+function drawCircles(centerPoint, radiusPoint) {
+    console.log(centerPoint, radiusPoint)
+    svg.selectAll(".bigCircle").data([centerPoint], d => d.id).join(
         enter => {
             enter.append("circle")
-            .attr("id", "bigCircle" + pointData[selected[0]].id)
+            // .attr("id", "bigCircle" + pointData[selected[0]].id)
             .attr("class", "bigCircle")
             .attr("fill", "red")
             .attr("opacity", 0.3)
             .attr("cx", xscale(centerPoint.x))
             .attr("cy", yscale(centerPoint.y))
-            .attr("r", xscale(Math.sqrt(squaredDist(centerPoint, radiusPoint))))
+            .attr("r",
+                (centerPoint.id != radiusPoint.id)
+                ? xscale(Math.sqrt(squaredDist(centerPoint, radiusPoint)))
+                : 20
+            )
         },
         update => update.attr("r",
-            xscale(Math.sqrt(squaredDist(centerPoint, radiusPoint)))
+            (centerPoint.id != radiusPoint.id)
+            ? xscale(Math.sqrt(squaredDist(centerPoint, radiusPoint)))
+            : 20
         )
     );
 }
