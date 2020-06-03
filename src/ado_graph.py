@@ -1,16 +1,12 @@
 from typing import Dict, List, Set
+from collections import defaultdict
 from dataclasses import dataclass
+from fibonacci_heap_mod import Fibonacci_heap
 import random
 import math
-import heapq
 
 
-@dataclass
-class Vertex:
-    vertex_id: int
-
-    def __hash__(self):
-        return hash(self.vertex_id)
+Vertex = int
 
 
 @dataclass
@@ -21,6 +17,35 @@ class Edge:
 
 
 INF = math.inf
+
+
+class UIntPQueue:
+    """
+    A priority queue that does not allow repeats. When a repeat value is
+    enqueued, it is updated with the smaller priority. The queue only allows
+    nonnegative integers up to a max value.
+    """
+
+    def __init__(self, max_num):
+        self.fheap = Fibonacci_heap()
+        self.entries = [None] * (max_num + 1)
+
+
+    def enqueue(self, value, priority):
+        if self.entries[value] is None:
+            self.entries[value] = self.fheap.enqueue(value, priority)
+        elif priority < self.entries[value].m_priority:
+            self.fheap.decrease_key(self.entries[value], priority)
+
+
+    def dequeue_min(self):
+        value = self.fheap.dequeue_min().m_elem
+        self.entries[value] = None
+        return value
+
+
+    def __len__(self):
+        return len(self.fheap)
 
 
 class ApproxDistanceOracle:
@@ -37,6 +62,14 @@ class ApproxDistanceOracle:
         self.V = V
         self.n = len(V)  # number of vertices
 
+        # Create lists of neighbors
+        self.neighbors = [[] for _ in V]
+        for u in V:
+            for v in range(u):
+                if E[u][v] != INF:
+                    self.neighbors[u].append(v)
+                    self.neighbors[v].append(u)
+
         # Initialize k+1 sets of vertices with decreasing sizes. (i-centers)
         self.A: List[Set[Vertex]] = [None for _ in range(k + 1)]
         self.A[0] = V
@@ -45,106 +78,86 @@ class ApproxDistanceOracle:
             prob = self.n ** (-1 / k)
             self.A[i] = {x for x in self.A[i - 1] if weighted_coin_flip(prob)}
 
-        self.a_i_v_distances: List[int, Dict[Vertex, int]] = [None for _ in range(k+1)]
-        self.p: Dict[int, List[int]] = {}
+        self.a_i_v_distances: List[int, List[Vertex, int]] = [[None] * self.n for _ in range(k+1)]
+        self.p: List[int, List[Vertex, Vertex]] = [[None] * self.n for _ in range(k+1)]
 
         # Initialize a_i_v_distances of A_k to INF
-        self.a_i_v_distances[k] = {v: INF for v in self.V}
-        self.p[k] = None
+        self.a_i_v_distances[k] = [INF] * self.n
+        self.p[k] = [None] * self.n
 
-        self.C: Dict[Vertex, Set[Vertex]] = {}
+        # Initialize empty bunches
+        self.B: List[Vertex, Set[Vertex]] = [set([v]) for v in V]
+
+        # Initialize table of calculated distances
+        self.distances = defaultdict(lambda: INF)
+        for v in V:
+            self.distances[(v, v)] = 0
 
         for i in range(k - 1, -1, -1):  # for i = k - 1 down to 0
-            # Add new source vertex to A_i
-            s = self.add_source(i)
+            # compute delta(A_i, v) for each v in V
+            self.compute_delta_a_i_v(i)
 
-            # Build shortest path trees
-            # (ideally using Thorup[2000b] O(m))
-            # but currently using Dijkstra's
-            self.a_i_v_distances[i], self.p[i] = self.distance_fn(s)
-
-            # Preserve that witnesses are in each bunch
-            for v in self.V:
-                if v != s and i + 1 < k:
-                    if self.a_i_v_distances[i][v] == self.a_i_v_distances[i + 1][v]:
-                        self.p[i] = self.p[i + 1]
-
-            # TODO: probably something missing here - I followed the pseudocode but they
-            # also mention creating a shortest path tree T(w) and then don't mention it again...?
-            for w in self.A[i] - self.A[i + 1]:
-                self.C[w] = {
-                    v
-                    for v in self.V
-                    if v != s and self.distance_fn(w, v)[0] < self.a_i_v_distances[i+1][v]
-                }
-
-        # TODO: This rest of this function is just copy pasted from the finite metric version.
-        # There are probably changes that need to happen.
-        self.B: Dict[Vertex, Set[Vertex]] = {}
-        for v in self.V:
-            self.B[v] = set()
-            for i in range(k):
-                self.B[v] |= {w for w in self.V if v in self.C[w]}
-
-        self.hash_table = {}
-        for v, b_set in self.B.items():
-            for w in b_set:
-                self.hash_table[(w, v)] = self.distance_fn(w, v)[0]
+            # compute distances and bunches
+            self.compute_vertex_distances(i)
 
 
     def query(self, u, v):
-        # TODO: This function is just copy pasted from the finite metric version.
-        # Make changes if necessary.
         w = u
         i = 0
         while w not in self.B[v]:
             i += 1
             u, v = v, u
             w = self.p[i][u]
-        return self.hash_table[(w, u)] + self.hash_table[(w, v)]
+        return self.distances[(w, u)] + self.distances[(w, v)]
 
 
-    def add_source(self, i):
+    def compute_delta_a_i_v(self, i):
         """
-        Adds a source vertex that is connected with edge weight 0 to all
-        nodes in A_i. Returns the index of the added vertex
+        Variant on Dijkstra's that tracks witnesses
         """
-        self.E.append([0 if v in self.A[i] else INF for v in self.V])
-        for v in self.A[i]:
-            self.E[v].append(0)
-        self.V.add(self.n)
-        s = self.n
-        self.n += 1
-        return s
-
-
-    def distance_fn(self, src, dst=None):
-        """
-        Variant on Dijkstra's trying to also keep track of witnesses
-        """
-        q = [(0, (src, None))]
-        distances = [0 if v == src else INF for v in self.V]
-        witnesses = [INF for v in self.V]
-        for w, c in enumerate(self.E[src]):
-            if c == 0:
-                witnesses[w] = w
-        while q:
-            (cost, (u, w)) = heapq.heappop(q)
-            if cost > distances[u]:
-                continue
-            for v, c in enumerate(self.E[u]):
-                prev = distances[v]
-                nxt = cost + c
-                # Because this is "strictly less than", we do not have to worry
-                # about vertices in A_i ending up with src as their witnesses.
+        q = UIntPQueue(self.n - 1)
+        self.a_i_v_distances[i] = [INF] * self.n
+        self.p[i] = [INF] * self.n
+        for w in self.A[i]:
+            self.a_i_v_distances[i][w] = 0
+            self.p[i][w] = w
+            # Instead of adding and later removing a new source vertex, just
+            # enqueue everything in A_i
+            q.enqueue(w, 0)
+        while len(q) > 0:
+            w = q.dequeue_min()
+            for v in self.neighbors[w]:
+                prev = self.a_i_v_distances[i][v]
+                nxt = self.a_i_v_distances[i][w] + self.E[w][v]
                 if nxt < prev:
-                    distances[v] = nxt
-                    witnesses[v] = witnesses[w]
-                    heapq.heappush(q, (nxt, (v, w)))
-        d = distances if dst is None else distances[dst]
-        w = witnesses if dst is None else witnesses[dst]
-        # print(d, w)
-        return d, w
+                    self.a_i_v_distances[i][v] = nxt
+                    self.p[i][v] = self.p[i][w]
+                    q.enqueue(v, nxt)
+
+
+    def compute_vertex_distances(self, i):
+        """
+        A modified version of Dijkstra's algorithm that only updates delta(c, v)
+        if the new estimate of delta(c, v) is strictly smaller than
+        delta(A_(i+1), v).
+        """
+        q = UIntPQueue(self.n - 1)
+
+        # Run Dijkstra's algorithm from each i-center
+        for c in self.A[i]:
+            q.enqueue(c, 0)
+            while len(q) > 0:
+                w = q.dequeue_min()
+                for v in self.neighbors[w]:
+                    nxt = self.distances[(c, w)] + self.E[w][v]
+                    # Only store the distance if the i-center c is closer to v
+                    # than everything in A_(i+1)
+                    if nxt < self.a_i_v_distances[i+1][v]:
+                        prev = self.distances[(c, v)]
+                        if nxt < prev:
+                            self.distances[(c, v)] = nxt
+                            self.B[v].add(c)
+                            q.enqueue(v, nxt)
 
 
 def weighted_coin_flip(prob):
@@ -166,7 +179,7 @@ if __name__ == "__main__":
     random.seed(0)
 
 
-    V: Set[Vertex] = set([i for i in range(4)])
+    V: Set[Vertex] = set(range(4))
     # INF means there is no edge between the vertices
     E: List[List[Vertex]] = [
         # [1, 2, 3, 4],
@@ -174,15 +187,17 @@ if __name__ == "__main__":
         # [3, 5, 7, 1],
         # [4, 6, 1, 9],
 
-        [0, 1, 1, INF],
-        [1, 0, 1, INF],
-        [1, 1, 0, 1],
-        [INF, INF, 1, 0],
+        #0    1    2    3
+        [0  , 4  , 3  , INF], #0
+        [4  , 0  , 2  , INF], #1
+        [3  , 2  , 0  , 1  ], #2
+        [INF, INF, 1  , 0  ], #3
     ]
 
     print(f"V: {V}")
     print(f"E: {E}")
+    print()
 
     ado = ApproxDistanceOracle(V, E)
-    x = ado.query(0, 2)
-    print(x)
+    x = ado.query(0, 1)
+    print(x)  # The actual distance is 4, but the estimate should be 5
