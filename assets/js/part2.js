@@ -4,7 +4,10 @@ const yscale = d3.scaleLinear().domain([0, 6]).range([400, 0]);
 
 const ON_COLOR = "grey";
 const OFF_COLOR = "black";
-const COLORS = ['#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD', '#8C564B', '#CFECF9', '#7F7F7F', '#BCBD22', '#17BECF']; // Tableau-10
+const COLORS = [
+    '#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD',
+    '#8C564B', '#CFECF9', '#7F7F7F', '#BCBD22', '#17BECF'
+]; // Tableau-10
 
 function squaredDist(a, b) {
     return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2);
@@ -25,9 +28,10 @@ function weightedCoinFlip(prob) {
 }
 
 const k = 4;
-const NUM_POINTS = 16;
+const NUM_POINTS = 10;
 let selected = [];
 
+// ADO CODE
 
 function createRandomPoints() {
     const ORIGIN = {x: 5, y: 0};
@@ -82,20 +86,35 @@ function findClosestVertex(A_i, v) {
 }
 
 
+// END OF ADO CODE
+
+
 function main() {
     const pointData = createRandomPoints();
     const A = createKSubsets(pointData);
+    const tableData = generateTableData(A, pointData);
+    drawPoints(pointData);
+    tabulate(tableData, [...Array(tableData.length).keys()], [...Array(k).keys()], pointData);
+}
+
+
+function generateTableData(A, pointData) {
     let tableData = [];
     for (let v = 0; v < NUM_POINTS; v++) {
         let row = {};
         for (let i = 0; i < k; i++) {
-            row[i] = findClosestVertex(A[i], pointData[v]).id;
+            const vert = findClosestVertex(A[i], pointData[v]);
+            if (vert == null) {
+                // If it doesn't work, refresh and try again
+                const newPointData = createRandomPoints();
+                const newA = createKSubsets(newPointData);
+                return generateTableData(newA, newPointData);
+            }
+            row[i] = vert.id;
         }
         tableData.push(row);
     }
-    drawLines(pointData);
-    drawPoints(pointData);
-    tabulate(tableData, [...Array(tableData.length).keys()], [...Array(k).keys()], pointData);
+    return tableData;
 }
 
 
@@ -131,13 +150,16 @@ function tabulate(data, rowHeaders, columnHeaders, pointData) {
         .on("mouseover", d => {
             selected = [d.row];
             drawLines(pointData);
-            drawCircles(pointData[d.row], pointData[d.value]);
+            drawCircles([pointData[d.row]], pointData[d.value]);
             drawPoints(pointData);
-
         })
         .on("mouseout", function(_) {
             // Needs to be a function to have access to "this".
             d3.select(this).style("fill", d => d.color);
+
+            // Remove all drawn artifacts
+            drawLines([]);
+            drawCircles([]);
         });
 }
 
@@ -160,33 +182,23 @@ function drawLines(pointData) {
 function drawPoints(pointData) {
     const DOTSIZE = 10;
 
+    // .join() is the best way I've found to use d3. The first line uses selectAll(), which
+    // finds all of the elements on the page with class "points". If there are none, it creates them.
+
+    // .data() allows you to input the graph data. Easiest way is a using a List of Dicts.
+    // d => d.id maps each newly created element to an id so that it updates rather than rerenders.
+    // All of these functions come with a callback function that is the row of data it is processing, e.g. {x: 5, y: 10, id: 10}
     svg.selectAll(".points").data(pointData, d => d.id).join(
         enter => {
+            // enter is like a context - this is the element(s) that is about to be added to the page.
+            // you can add attributes very simliar to HTML ones.
             enter.append("circle")
             .attr("id", d => "circle" + d.id)
-            .attr("class", "points")
+            .attr("class", "points")  // Make sure this matches selector in the selectAll().
             .style("fill", d => d.color)
             .attr("cx", d => xscale(d.x))
             .attr("cy", d => yscale(d.y))
             .attr("r", DOTSIZE)
-            .on("click", function(d) {
-                if (selected.length == 0) {
-                    selected.push(d.id);
-                    d3.select(this).style("fill", ON_COLOR);
-                } else if (selected.length == 1) {
-                    selected.push(d.id);
-                    drawCircles(pointData);
-                    drawPoints(pointData);
-                } else if (selected.length == 2) {
-                    if (d.id == selected[0]) {
-                        selected = [];
-                    } else {
-                        selected[1] = d.id;
-                        drawCircles(pointData[selected[0]], pointData[selected[1]]);
-                        drawPoints(pointData);
-                    }
-                }
-            })
             .on("mouseover", function(_) {
                 // Needs to be a function to have access to "this".
                 d3.select(this).style("fill", ON_COLOR);
@@ -202,14 +214,20 @@ function drawPoints(pointData) {
                 .attr("y", d => yscale(d.y) + 10)
                 .text((_, i) => i);
         },
+        // update allows you to call drawPoints() again, and instead of creating brand new points,
+        // skip the enter => code and do just this instead.
+        // raise() moves the points to the top layer of the SVG, kind of like z-index
         update => update.raise()
+        // You can also add a custom remove => function
+        // remove => remove.do stuff
     );
 }
 
 
-function drawCircles(centerPoint, radiusPoint) {
-    console.log(centerPoint, radiusPoint)
-    svg.selectAll(".bigCircle").data([centerPoint], d => d.id).join(
+function drawCircles(centerPointData, radiusPoint = null) {
+    // TODO REMOVE THIS AND JUST MANUALLY ADD AND REMOVE
+    const centerPoint = centerPointData.length > 0 ? centerPointData[0] : null;
+    svg.selectAll(".bigCircle").data(centerPointData, d => d.id).join(
         enter => {
             enter.append("circle")
             // .attr("id", "bigCircle" + pointData[selected[0]].id)
