@@ -28,7 +28,7 @@ function weightedCoinFlip(prob) {
 }
 
 const k = 4;
-const NUM_POINTS = 10;
+const NUM_POINTS = 15;
 let selected = [];
 
 // ADO CODE
@@ -94,7 +94,7 @@ function main() {
     const A = createKSubsets(pointData);
     const tableData = generateTableData(A, pointData);
     drawPoints(pointData);
-    tabulate(tableData, [...Array(tableData.length).keys()], [...Array(k).keys()], pointData);
+    tabulate(tableData, [...Array(tableData.length).keys()], [...Array(k).keys()], pointData, A);
 }
 
 
@@ -118,7 +118,7 @@ function generateTableData(A, pointData) {
 }
 
 
-function tabulate(data, rowHeaders, columnHeaders, pointData) {
+function tabulate(data, rowHeaders, columnHeaders, pointData, A) {
 	const table = d3.select('#table-container').append('table');
 	const thead = table.append('thead');
 	const tbody = table.append('tbody');
@@ -149,8 +149,8 @@ function tabulate(data, rowHeaders, columnHeaders, pointData) {
         .text(d => d.value)
         .on("mouseover", d => {
             selected = [d.row];
-            drawLines(pointData);
-            drawCircles([pointData[d.row]], pointData[d.value]);
+            drawLines(pointData, d);
+            drawCircles([pointData[d.row]], [pointData[d.value]]);
             drawPoints(pointData);
         })
         .on("mouseout", function(_) {
@@ -164,8 +164,13 @@ function tabulate(data, rowHeaders, columnHeaders, pointData) {
 }
 
 
-function drawLines(pointData) {
-    const allPointPairs = d3.cross(pointData, pointData).filter(z => z[0].id == selected[0]);
+function drawLines(pointData, d) {
+    console.log(d)
+    const allPointPairs = d3.cross(pointData, pointData)
+        .filter(z =>
+            z[0].id == selected[0]
+            && squaredDist(z[0], z[1]) <= squaredDist(pointData[d.value], z[0])
+        ); // && z[1].id in nearbyPoints
     svg.selectAll(".lines").data(allPointPairs, d => d.id).join(
         enter => enter.append("line")
             .attr("class", "lines")
@@ -210,6 +215,7 @@ function drawPoints(pointData) {
             enter.append("text")
                 .attr("class", d => "label" + d.id)
                 .style("text-anchor", "middle")
+                .style("user-select", "none")
                 .attr("x", d => xscale(d.x) + 20)
                 .attr("y", d => yscale(d.y) + 10)
                 .text((_, i) => i);
@@ -224,27 +230,24 @@ function drawPoints(pointData) {
 }
 
 
-function drawCircles(centerPointData, radiusPoint = null) {
-    // TODO REMOVE THIS AND JUST MANUALLY ADD AND REMOVE
-    const centerPoint = centerPointData.length > 0 ? centerPointData[0] : null;
-    svg.selectAll(".bigCircle").data(centerPointData, d => d.id).join(
+function drawCircles(centerPointData, radiusPoint = []) {
+    svg.selectAll(".bigCircle").data(d3.zip(centerPointData, radiusPoint), d => d[0].id).join(
         enter => {
             enter.append("circle")
-            // .attr("id", "bigCircle" + pointData[selected[0]].id)
             .attr("class", "bigCircle")
             .attr("fill", "red")
             .attr("opacity", 0.3)
-            .attr("cx", xscale(centerPoint.x))
-            .attr("cy", yscale(centerPoint.y))
-            .attr("r",
-                (centerPoint.id != radiusPoint.id)
-                ? xscale(Math.sqrt(squaredDist(centerPoint, radiusPoint)))
+            .attr("cx", d => xscale(d[0].x))
+            .attr("cy", d => yscale(d[0].y))
+            .attr("r", d =>
+                (d[0].id != d[1].id)
+                ? xscale(Math.sqrt(squaredDist(d[0], d[1])))
                 : 20
-            )
+            );
         },
-        update => update.attr("r",
-            (centerPoint.id != radiusPoint.id)
-            ? xscale(Math.sqrt(squaredDist(centerPoint, radiusPoint)))
+        update => update.attr("r", d =>
+            (d[0].id != d[1].id)
+            ? xscale(Math.sqrt(squaredDist(d[0], d[1])))
             : 20
         )
     );

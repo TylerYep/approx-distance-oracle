@@ -165,15 +165,6 @@ def weighted_coin_flip(prob):
     return random.choices([True, False], [prob, 1 - prob])[0]
 
 
-def argmin(a):
-    """
-    Returns index of minimum element in array a
-    """
-    if not a:
-        return None
-    return min(range(len(a)), key=lambda x: a[x])
-
-
 if __name__ == "__main__":
     # Fix seed to preserve sanity
     random.seed(0)
