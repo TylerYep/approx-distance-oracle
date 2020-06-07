@@ -23,7 +23,7 @@
 					{left: "$$", right: "$$", display: true},
 					{left: "$", right: "$", display: false},
 					{left: "\\(", right: "\\)", display: false},
-					{left: "\\[", right: "\\]", display: true}
+					{left: "\\[", right: "\\]", display: true},
 				],
 				macros: {
 					// Probability
@@ -61,37 +61,26 @@
 				}
 			};
 		</script>
-		<script defer src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js" integrity="sha384-kWPLUVMOks5AQFrykwIup5lo0m3iMkkHrD0uJ4H5cjeGihAutqP0yW0J6dpFiVkI" crossorigin="anonymous"
-			onload="renderMathInElement(document.body, katexOptions);"></script>
-		<style>
-			#map {
-			  width: 100%;
-			  height: 100%;
-			}
-			svg {
-			  position: absolute;
-			  width: 100%;
-			  height: 100%;
-			}
-			#timeVis {
-			  position: relative;
-			  width: 100%;
-			  height: 100%;
-			}
-		  </style>
+		<script
+			defer src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js"
+			integrity="sha384-kWPLUVMOks5AQFrykwIup5lo0m3iMkkHrD0uJ4H5cjeGihAutqP0yW0J6dpFiVkI"
+			crossorigin="anonymous"
+			onload="renderMathInElement(document.body, katexOptions);">
+		</script>
 	</head>
 	<body class="is-preload">
 		<!-- Header -->
 		<section id="header">
 			<div class="inner">
-				<span class="icon solid major fa-car-crash"></span>
+				<span class="icon solid major fa-car"></span>
 				<h1>Approximate Distance Oracles</h1>
 				<p>Hello! This is Tyler, Mark, Ivy, and Josh's project for Stanford's <a href="http://web.stanford.edu/class/cs166/"><strong>CS 166: Data Structures</strong></a>.</p>
 				<ul class="actions special">
 					<li><a href="#one" class="button">Problem</a></li>
-					<li><a href="#two" class="button">Motivation</a></li>
-					<li><a href="#three" class="button">Proof</a></li>
-					<li><a href="#four" class="button">Visualizations</a></li>
+					<li><a href="#a2-prepro" class="button">Preprocessing</a></li>
+					<li><a href="#" class="button">Query</a></li>
+					<li><a href="#a2-analysis" class="button">Runtime & Space Analysis</a></li>
+					<li><a href="#four" class="button">Practical Application</a></li>
 				</ul>
 			</div>
 		</section>
@@ -105,7 +94,7 @@
 			</div>
 		</section>
 
-		<section class="main style1">
+		<section id="two" class="main style1">
 			<div class="container">
 				<h2>First Attempt: A simple probabilistic solution</h2>
 				<p>
@@ -118,7 +107,7 @@
 			</div>
 		</section>
 
-		<section class="main style1">
+		<section id="three" class="main style1">
 			<div class="container">
 				<h2>Second Attempt: Limiting error</h2>
 				<p>
@@ -167,7 +156,8 @@
 					<p>
 						We can find the first set of distances by running Dijkstra's algorithm from each vertex in $A$. Recall that our query algorithm needs to know for each $v$ the distance to $\p{v}$, the nearest vertex in $A$ to $v$. We can calculate and store this information as we run Dijkstra's algorithm. Before we find the second set of vertices, it would help to know how close each vertex is to its nearest vertex in $A$. For a vertex $v$, we denote this distance as $\dist{v}{A}$. It turns out that we can find all such distances with a single run of Dijkstra's algorithm: we add a new vertex $s$ to the graph, and add edges of cost 0 from $s$ to each vertex in $A$. For any vertex $v$, a path from $v$ to $s$ must take some edge from a vertex in $A$ to $s$, and since all such edges have weight 0, the shortest distance from $v$ to $s$ must be the same as the shortest distance from $v$ to any vertex in $A$.
 					</p>
-					<!-- TODO: Add visualization -->
+
+					<iframe src="./index2.html" title="Preprocessing Visualization"></iframe>
 					<p>
 						We could find the second set of distances by running Dijkstra's algorithm from each vertex, but that just means solving APSP, so we need something more efficient. First, we can notice that we are only searching for distances from vertices in $V$ to vertices in $V \setminus A$, so instead of running Dijkstra's algorithm from every $v \in V$, we can run it from every $w \in V \setminus A$. Second, we do not need to know the distances from each $w \in V \setminus A$ to every vertex in the graph; we only need the distances from each $w \in V \setminus A$ to the vertices $v$ such that $\dist{v}{w} < \dist{v}{A}$. This means that we can run a modified version of Dijkstra's algorithm that only finds these distances. Recall that Dijkstra's algorithm maintains shortest distance estimates for each vertex, and that when we update a vertex's shortest distance estimate, we enqueue the vertex with priority equal to its shortest distance estimate. In our modified version of Dijkstra's algorithm, we only update the shortest distance estimate of a vertex $v$, and only enqueue $v$, if the new shortest distance estimate is less than $\dist{v}{A}$. This ensures that we only calculate the distances we need to know, and once we have those distances, we can store them in a hash table for easy lookup later on. To recount, given a graph $G = (V, E)$, our entire preprocessing algorithm is as follows:
 						<ol>
@@ -288,7 +278,7 @@
 						<button id="resetBtn">Reset Directions</button>
 					</div>
 				</div>
-				<svg id='vis' style="width: 1100px; height: 500px; z-index: 200;"></svg>
+				<svg id='vis' style='width: 1100px; height: 500px; z-index: 200;'></svg>
 				<div id='map' style='width: 1100px; height: 500px;'></div>
 				<svg id='histogramVis' style="position: relative;"></svg>
 			</div>
@@ -320,6 +310,5 @@
 		<script src="assets/js/util.js"></script>
 		<script src="assets/js/main.js"></script>
 		<script src='assets/js/viz.js'></script>
-
 	</body>
 </html>

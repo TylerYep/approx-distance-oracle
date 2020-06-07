@@ -20,9 +20,15 @@ td {
     width: 50%;
 }
 
-.col {
+.lcol {
     display: inline-block;
-    width: 49%;
+    width: 70%;
+    height: 100%;
+}
+
+.rcol {
+    display: inline-block;
+    width: 25%;
     height: 100%;
 }
 
@@ -37,7 +43,6 @@ table {
 	background: linear-gradient(45deg, #49a09d, #5f2c82);
 	font-family: sans-serif;
 	font-weight: 100;
-	/* width: 800px; */
 	border-collapse: collapse;
 	overflow: hidden;
 	box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);

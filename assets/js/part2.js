@@ -27,9 +27,10 @@ function weightedCoinFlip(prob) {
     return Math.random() < prob;
 }
 
-const k = 4;
+const k = 5;
 const NUM_POINTS = 15;
 let selected = [];
+let frozenCircle = false;
 
 // ADO CODE
 
@@ -128,7 +129,8 @@ function tabulate(data, rowHeaders, columnHeaders, pointData, A) {
         .data([""].concat(columnHeaders))
         .enter()
         .append('th')
-        .text(d => d);
+        .text(d => d)
+        .style("background-color", (_, i) => i > 0 ? COLORS[i-1] : "none");
 
     const rows = tbody.selectAll('tr')
         .data(data)
@@ -147,25 +149,32 @@ function tabulate(data, rowHeaders, columnHeaders, pointData, A) {
         .enter()
         .append('td')
         .text(d => d.value)
+        .on("click", function(_) {
+            frozenCircle = !frozenCircle;
+            // d3.select(this).style("fill", "white");
+        })
         .on("mouseover", d => {
+            // if (!frozenCircle) {
             selected = [d.row];
             drawLines(pointData, d);
             drawCircles([pointData[d.row]], [pointData[d.value]]);
             drawPoints(pointData);
+            // }
         })
-        .on("mouseout", function(_) {
+        .on("mouseout", _ => {
+            // if (!frozenCircle) {
             // Needs to be a function to have access to "this".
-            d3.select(this).style("fill", d => d.color);
+            // d3.select(this).style("fill", d => d.color);
 
             // Remove all drawn artifacts
             drawLines([]);
             drawCircles([]);
+            // }
         });
 }
 
 
 function drawLines(pointData, d) {
-    console.log(d)
     const allPointPairs = d3.cross(pointData, pointData)
         .filter(z =>
             z[0].id == selected[0]
@@ -236,19 +245,17 @@ function drawCircles(centerPointData, radiusPoint = []) {
             enter.append("circle")
             .attr("class", "bigCircle")
             .attr("fill", "red")
-            .attr("opacity", 0.3)
+            .style("stroke", "black")
+            .style("stroke-dasharray", "3, 3")
+            .attr("opacity", 0.25)
             .attr("cx", d => xscale(d[0].x))
             .attr("cy", d => yscale(d[0].y))
             .attr("r", d =>
-                (d[0].id != d[1].id)
-                ? xscale(Math.sqrt(squaredDist(d[0], d[1])))
-                : 20
+                (d[0].id != d[1].id) ? xscale(Math.sqrt(squaredDist(d[0], d[1]))) : 20
             );
         },
         update => update.attr("r", d =>
-            (d[0].id != d[1].id)
-            ? xscale(Math.sqrt(squaredDist(d[0], d[1])))
-            : 20
+            (d[0].id != d[1].id) ? xscale(Math.sqrt(squaredDist(d[0], d[1]))) : 20
         )
     );
 }

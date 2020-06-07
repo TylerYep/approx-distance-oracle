@@ -104,3 +104,27 @@ h4 {
     background: darkgreen;
     cursor: pointer;
   }
+
+  #map {
+    width: 100%;
+    height: 100%;
+  }
+  svg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+  #timeVis {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .bigCircle {
+    border: dotted 20px black;
+  }
+
+  iframe {
+    width: 100%;
+    height: 840px;
+  }
