@@ -125,7 +125,7 @@
 					We need some way to ensure that if two vertices are near each other, we know both of their distances to some vertex that is near both of them. However, we also want to keep $|A|$ small to maintain time and space efficiency. Our solution is to, for each vertex $v$, calculate the distances from $v$ to the vertices in $A$ as well as some vertices near $v$. Specifically, we calculate the distances from $v$ to each vertex in a bunch $\bunch{v}$, where $\bunch{v}$ is the union of $A$ with the set of all vertices nearer to $v$ than all vertices in $A$. In other words, a vertex $u$ is in $\bunch{v}$ if
 					<ul>
 						<li>$u \in A$ or</li>
-						<li>$u$ is strictly less distant from $v$ than all vertices in $A$ (we describe how to find these vertices in <!-- TODO: link section \cref{ss:prepro}) -->.</li>
+						<li>$u$ is strictly less distant from $v$ than all vertices in $A$ (we describe how to find these vertices in our <a href="#a2-prepro">section on preprocessing</a>).</li>
 					</ul>
 				</p>
 				<p>
@@ -155,7 +155,7 @@
 				<p>
 					In other words, our approximation is at most three times the actual value! Of course, this is all assuming that we can efficiently perform our preprocessing.
 				</p>
-				<section>
+				<section id="a2-prepro">
 					<h3>Preprocessing</h3>
 					<p>
 						For each vertex $v$, we need to know the shortest distances
@@ -178,7 +178,7 @@
 						</ol>
 					</p>
 				</section>
-				<section>
+				<section id="a2-analysis">
 					<h3>Runtime and Space Analysis</h3>
 					<p>
 						Notice first that query time is constant: we lookup no more than two distances, and we can lookup the closest vertex in $A$ to each vertex if we store this information during preprocessing. Now we analyze preprocessing. Let $n$ be the number of vertices and $m$ be the number of edges. The first step clearly runs in time $\bigo{n}$. To analyze step 2, it is useful to know the expected size of $A$. Let $q$ be the probability we use to decide if we should include each vertex in $A$. Then we see that $\ev{\abs{A}} = qn$. Since Dijkstra's algorithm runs in $\bigo{m}$ time, step 2 has expected runtime $\bigo{qmn}$. Step 3 is just a single run of Dijkstra's algorithm, so it runs in time $\bigo{m}$. To analyze step 4, first note that in our modified version of Dijkstra's algorithm from start vertex $w$, we only visit vertices $v$ where $\dist{v}{w} \lt \dist{v}{A}$, and at each vertex $v$ we visit, we consider all the edges that touch $v$. We denote the set of edges that touch $v$ as $\edges{v}$. Thus, the runtime of step 4 is bounded by
@@ -225,7 +225,7 @@
 				<section>
 					<h3>Runtime and Space Analysis</h3>
 					<p>
-						Notice that our query time is now $\bigo{k}$, which, if we treat $k$ as a constant, is constant time. Now we analyze preprocessing. Let $n$ be the number of vertices and $m$ be the number of edges. As in <!-- TODO: Link section -->, we can analyze preprocessing time by finding the expected size of $\bunch{v}$ for each vertex $v$. In particular, for each $0 \le i \lt k$, when we run Dijkstra's algorithm from a vertex $w \in A_i \setminus A_{i+1}$, we only visit the vertices $v$ where $\dist{v}{w} \lt \dist{v}{A_{i+1}}$. At each vertex $v$ that we visit, we consider the edges that touch $v$, the set of which we denote $\edges{v}$. Thus, our runtime is bounded by
+						Notice that our query time is now $\bigo{k}$, which, if we treat $k$ as a constant, is constant time. Now we analyze preprocessing. Let $n$ be the number of vertices and $m$ be the number of edges. As in our <a href="#a2-analysis">analysis for our second attempt</a>, we can analyze preprocessing time by finding the expected size of $\bunch{v}$ for each vertex $v$. In particular, for each $0 \le i \lt k$, when we run Dijkstra's algorithm from a vertex $w \in A_i \setminus A_{i+1}$, we only visit the vertices $v$ where $\dist{v}{w} \lt \dist{v}{A_{i+1}}$. At each vertex $v$ that we visit, we consider the edges that touch $v$, the set of which we denote $\edges{v}$. Thus, our runtime is bounded by
 						$$\begin{aligned}
 							\sum_{i=0}^{k-1} \sum_{w \in A_i \setminus A_{i+1}} \sum_{\substack{v \in A_i \\ \dist{v}{w} \lt \dist{v}{A_{i+1}}}} \abs{\edges{v}}
 								&= \sum_{v \in A_i} \sum_{i=0}^{k-1} \sum_{\substack{w \in A_i \setminus A_{i+1} \\ \dist{v}{w} \lt \dist{v}{A_{i+1}}}} \abs{\edges{v}} \\
@@ -237,7 +237,7 @@
 							\bunch{v}	&= \bigcup_{i=0}^{k-1} \curl{w \in A_i \setminus A_{i+1} \mid \dist{v}{w} \lt \dist{v}{A_{i+1}}} \\
 										&= \bigcup_{i=0}^{k-1} (\bunch{v} \cap \paren{A_i \setminus A_{i+1}}).
 						\end{aligned}$$
-						Thus, if we can upward bound the expected size of each $\bunch{v} \cap \paren{A_i \setminus A_{i+1}}$, we can upward bound the size of $\bunch{v}$. We proceed similarly as we did in <!-- TODO: link section -->. Recall that $A_k = \varnothing$, which means that $\dist{v}{A_k} = \infty$ and therefore that $A_{k-1} \subseteq \bunch{v}$. This means that $\abs{\bunch{v} \cap \paren{A_{k-1} \setminus A_k}} = \abs{A_{k-1}}$. We see that
+						Thus, if we can upward bound the expected size of each $\bunch{v} \cap \paren{A_i \setminus A_{i+1}}$, we can upward bound the size of $\bunch{v}$. We proceed similarly as we did in our <a href="#a2-analysis">analysis for our second attempt</a>. Recall that $A_k = \varnothing$, which means that $\dist{v}{A_k} = \infty$ and therefore that $A_{k-1} \subseteq \bunch{v}$. This means that $\abs{\bunch{v} \cap \paren{A_{k-1} \setminus A_k}} = \abs{A_{k-1}}$. We see that
 						$$\begin{aligned}
 							\ev{\abs{\bunch{v} \cap \paren{A_{k-1} \setminus A_k}}}	&= \ev{\abs{A_{k-1}}} \\
 																					&= q^{k-1}n.
