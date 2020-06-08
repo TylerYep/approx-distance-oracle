@@ -27,9 +27,10 @@ function weightedCoinFlip(prob) {
     return Math.random() < prob;
 }
 
-const k = 4;
-const NUM_POINTS = 10;
+const k = 5;
+const NUM_POINTS = 15;
 let selected = [];
+let frozenCircle = false;
 
 // ADO CODE
 
@@ -94,9 +95,8 @@ function main() {
     const A = createKSubsets(pointData);
     const tableData = generateTableData(A, pointData);
     drawPoints(pointData);
-    tabulate(tableData, [...Array(tableData.length).keys()], [...Array(k).keys()], pointData);
+    console.log(tableData);
 }
-
 
 function generateTableData(A, pointData) {
     let tableData = [];
@@ -116,68 +116,6 @@ function generateTableData(A, pointData) {
     }
     return tableData;
 }
-
-
-function tabulate(data, rowHeaders, columnHeaders, pointData) {
-    const table = d3.select('#table-container').append('table');
-    const thead = table.append('thead');
-    const tbody = table.append('tbody');
-
-    thead.append('tr')
-        .selectAll('th')
-        .data([""].concat(columnHeaders))
-        .enter()
-        .append('th')
-        .text(d => d);
-
-    const rows = tbody.selectAll('tr')
-        .data(data)
-        .enter()
-        .append('tr');
-
-    rows.append('th')
-        .text((_, i) => rowHeaders[i])
-
-    rows.selectAll('td')
-        .data((row, r) => columnHeaders.map(col => ({
-            row: r,
-            column: col,
-            value: row[col],
-        })))
-        .enter()
-        .append('td')
-        .text(d => d.value)
-        .on("mouseover", d => {
-            selected = [d.row];
-            drawLines(pointData);
-            drawCircles([pointData[d.row]], pointData[d.value]);
-            drawPoints(pointData);
-        })
-        .on("mouseout", function (_) {
-            // Needs to be a function to have access to "this".
-            d3.select(this).style("fill", d => d.color);
-
-            // Remove all drawn artifacts
-            drawLines([]);
-            drawCircles([]);
-        });
-}
-
-
-function drawLines(pointData) {
-    const allPointPairs = d3.cross(pointData, pointData).filter(z => z[0].id == selected[0]);
-    svg.selectAll(".lines").data(allPointPairs, d => d.id).join(
-        enter => enter.append("line")
-            .attr("class", "lines")
-            .attr("stroke", "black")
-            .attr("strokewidth", 5)
-            .attr("x1", d => xscale(d[0].x))
-            .attr("y1", d => yscale(d[0].y))
-            .attr("x2", d => xscale(d[1].x))
-            .attr("y2", d => yscale(d[1].y))
-    );
-}
-
 
 function drawPoints(pointData) {
     const DOTSIZE = 10;
@@ -199,17 +137,21 @@ function drawPoints(pointData) {
                 .attr("cx", d => xscale(d.x))
                 .attr("cy", d => yscale(d.y))
                 .attr("r", DOTSIZE)
-                .on("mouseover", function (_) {
-                    // Needs to be a function to have access to "this".
-                    d3.select(this).style("fill", ON_COLOR);
-                })
-                .on("mouseout", function (_) {
-                    // Needs to be a function to have access to "this".
-                    d3.select(this).style("fill", d => d.color);
-                });
+                .on("mouseover", handleMouseOver)
+                .on("mouseout", handleMouseOut)
+                .on("click", handleClick)
+            // .on("mouseover", function (_) {
+            //     // Needs to be a function to have access to "this".
+            //     d3.select(this).style("fill", ON_COLOR);
+            // })
+            // .on("mouseout", function (_) {
+            //     // Needs to be a function to have access to "this".
+            //     d3.select(this).style("fill", d => d.color);
+            // });
             enter.append("text")
                 .attr("class", d => "label" + d.id)
                 .style("text-anchor", "middle")
+                .style("user-select", "none")
                 .attr("x", d => xscale(d.x) + 20)
                 .attr("y", d => yscale(d.y) + 10)
                 .text((_, i) => i);
@@ -223,32 +165,127 @@ function drawPoints(pointData) {
     );
 }
 
+let u = null;
+let v = null;
+let w = null;
 
-function drawCircles(centerPointData, radiusPoint = null) {
-    // TODO REMOVE THIS AND JUST MANUALLY ADD AND REMOVE
-    const centerPoint = centerPointData.length > 0 ? centerPointData[0] : null;
-    svg.selectAll(".bigCircle").data(centerPointData, d => d.id).join(
-        enter => {
-            enter.append("circle")
-                // .attr("id", "bigCircle" + pointData[selected[0]].id)
-                .attr("class", "bigCircle")
-                .attr("fill", "red")
-                .attr("opacity", 0.3)
-                .attr("cx", xscale(centerPoint.x))
-                .attr("cy", yscale(centerPoint.y))
-                .attr("r",
-                    (centerPoint.id != radiusPoint.id)
-                        ? xscale(Math.sqrt(squaredDist(centerPoint, radiusPoint)))
-                        : 20
-                )
-        },
-        update => update.attr("r",
-            (centerPoint.id != radiusPoint.id)
-                ? xscale(Math.sqrt(squaredDist(centerPoint, radiusPoint)))
-                : 20
-        )
-    );
+
+function clearLines() {
+    d3.selectAll("g").remove();
 }
+
+function unselectPoint(point) {
+    clearBunch(point);
+    clearCircle(point);
+}
+
+function clearBunch({ id }) {
+    d3.select(`#bunch_${id}`).remove();
+}
+
+function clearCircle({ id }) {
+    d3.select(`#circle_${id}`).remove();
+}
+
+function drawLine(start, end, label = "", color = "black") {
+    console.log(`Drawing line between ${start.id} and ${end.id}`);
+    let line = svg.append("g");
+    line.append('line')
+        .style("stroke", color)
+        .style("stroke-width", 1)
+        .attr("x1", xscale(start.x))
+        .attr("y1", yscale(start.y))
+        .attr("x2", xscale(end.x))
+        .attr("y2", yscale(end.y))
+    let mid_x = start.x + ((end.x - start.x) / 2);
+    let mid_y = start.y + ((end.y - start.y) / 2);
+    line.append("text")
+        .attr('text-anchor', 'middle')
+        .text(label)
+        .attr("id", `label_${start.id}_${end.id}`)
+        .style("user-select", "none")
+        .attr("x", xscale(mid_x) - 10)
+        .attr("y", yscale(mid_y) + 20)
+}
+
+function drawCircle(center) {
+    // TODO
+}
+
+function drawBunch(point) {
+    // TODO: Create smooth polygon convex hull around points in bunch
+    // http://bl.ocks.org/hollasch/9d3c098022f5524220bd84aae7623478
+}
+
+function query(u, v) {
+    // TODO
+}
+
+function getPoint(id) {
+    return d3.select(id);
+}
+
+function handleClick(point) {
+    console.log(`Clicked ${point.id}`);
+    console.log(point);
+    // Clear old state
+    clearBunch(point);
+    clearCircle(point);
+    // Update u
+    u = point;
+    // Draw new state
+    drawBunch(u);
+    drawCircle(u);
+}
+
+
+function handleMouseOver(point) {
+    console.log(`Moused over ${point.id}`);
+    v = point;
+    drawBunch(v);
+    drawCircle(v);
+    if (u !== null) {
+        // WIP
+        // second point being clicked (v)
+        // w, estimate = query(u, v);
+        const estimate = 0;
+        // : drawLine(u, w, `${squaredDist(u, w)}`);
+        // drawLine(v, w, `${squaredDist(v, w)}`);
+        drawLine(u, v, `Estimate: ${estimate} (Actual: ${squaredDist(u, v).toFixed(1)})`);
+    }
+    d3.select(this).style("fill", ON_COLOR);
+}
+
+function handleMouseOut(point) {
+    console.log(`Moused out ${point.id}`);
+    unselectPoint(v);
+    clearLines();
+    v = null;
+    d3.select(this).style("fill", () => point.color);
+}
+
+
+
+// function drawCircles(centerPointData, radiusPoint = []) {
+//     svg.selectAll(".bigCircle").data(d3.zip(centerPointData, radiusPoint), d => d[0].id).join(
+//         enter => {
+//             enter.append("circle")
+//                 .attr("class", "bigCircle")
+//                 .attr("fill", "red")
+//                 .style("stroke", "black")
+//                 .style("stroke-dasharray", "3, 3")
+//                 .attr("opacity", 0.25)
+//                 .attr("cx", d => xscale(d[0].x))
+//                 .attr("cy", d => yscale(d[0].y))
+//                 .attr("r", d =>
+//                     (d[0].id != d[1].id) ? xscale(Math.sqrt(squaredDist(d[0], d[1]))) : 20
+//                 );
+//         },
+//         update => update.attr("r", d =>
+//             (d[0].id != d[1].id) ? xscale(Math.sqrt(squaredDist(d[0], d[1]))) : 20
+//         )
+//     );
+// }
 
 
 main();
