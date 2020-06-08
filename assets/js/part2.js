@@ -179,11 +179,11 @@ function tabulate(data, rowHeaders, columnHeaders, pointData, A) {
 
 
 function drawLines(pointData, d) {
-    const allPointPairs = d3.cross(pointData, pointData)
-        .filter(z =>
-            z[0].id == selected[0]
-            && squaredDist(z[0], z[1]) <= squaredDist(pointData[d.value], z[0])
-        ); // && z[1].id in nearbyPoints
+    const allPointPairs = d3.cross(pointData, pointData).filter(z =>
+        z[0].id == selected[0]
+        && z[0].id !== z[1].id
+        && squaredDist(z[0], z[1]) <= squaredDist(pointData[d.value], z[0])
+    );
     svg.selectAll(".lines").data(allPointPairs, d => d.id).join(
         enter => enter.append("line")
             .attr("class", "lines")
@@ -193,6 +193,20 @@ function drawLines(pointData, d) {
             .attr("y1", d => yscale(d[0].y))
             .attr("x2", d => xscale(d[1].x))
             .attr("y2", d => yscale(d[1].y))
+    );
+    svg.selectAll(".lineText").data(allPointPairs, d => d.id).join(
+        enter => enter.append("text")
+            .attr("class", "lineText")
+            .style("text-anchor", "middle")
+            .style("user-select", "none")
+            .text(d => Math.sqrt(squaredDist(d[0], d[1])).toFixed(2))
+            .attr("transform", d => {
+                const xCoord = xscale((d[0].x + d[1].x) / 2) + 10;
+                const yCoord = yscale((d[0].y + d[1].y) / 2) + 15;
+                const rotation = Math.atan2(d[0].y - d[1].y, d[0].x - d[1].x);
+                return `translate(${xCoord},${yCoord}) rotate(${rotation})`;
+            })
+
     );
 }
 
@@ -205,7 +219,8 @@ function drawPoints(pointData, A, k) {
 
     // .data() allows you to input the graph data. Easiest way is a using a List of Dicts.
     // d => d.id maps each newly created element to an id so that it updates rather than rerenders.
-    // All of these functions come with a callback function that is the row of data it is processing, e.g. {x: 5, y: 10, id: 10}
+    // All of these functions come with a callback function that is the row of data it is processing,
+    // e.g. {x: 5, y: 10, id: 10}
     svg.selectAll(".points").data(pointData, d => d.id).join(
         enter => {
             // enter is like a context - this is the element(s) that is about to be added to the page.

@@ -100,7 +100,19 @@
 				<p>
 					We cannot store all distances in space $\smallo{n^2}$, so we must make some choices about what distances to store. A natural approach is to choose these distances probabilistically. We can construct a set $A \subseteq V$ by adding each $v \in V$ to $A$ with some probability $q$. Once we have this set, for every $v \in V$ and $w \in A$, we calculate and store the $\dist{v}{w}$ (we explore the best way to do this in \cref{ss:prepro}). When we receive some query $\dist{u}{v}$, if one of $u$ and $v$ is in $A$, then we've already calculated the shortest distance, and we can return that. Otherwise, we can choose some $w \in A$, say, the $w\in A$ that is least distant from $u$, and return the approximation $\edist{u}{v} = \dist{u}{w} + \dist{w}{v}$.
 				</p>
-				<!-- TODO: Visualization goes here -->
+				<div class="container">
+					<div class="row gtr-150">
+						<div class="col-4 col-12-medium">
+							<img src="images/1graph.png" />
+						</div>
+						<div class="col-4 col-12-medium">
+							<img src="images/2graph.png" />
+						</div>
+						<div class="col-4 col-12-medium">
+							<img src="images/2graph.png" />
+						</div>
+					</div>
+				</div>
 				<p>
 					So, how good of an approximation is this? We will certainly not get an underapproximation since a path from $u$ to $w$ to $v$ must be at least as long as the shortest path from $u$ to $v$. It turns out, however, that our approximation may be arbitrarily large since $u$ and $v$ may be nearby while everything in $A$ may be distant from $u$. This leads us to our second attempt.
 				</p>
@@ -157,6 +169,10 @@
 						We can find the first set of distances by running Dijkstra's algorithm from each vertex in $A$. Recall that our query algorithm needs to know for each $v$ the distance to $\p{v}$, the nearest vertex in $A$ to $v$. We can calculate and store this information as we run Dijkstra's algorithm. Before we find the second set of vertices, it would help to know how close each vertex is to its nearest vertex in $A$. For a vertex $v$, we denote this distance as $\dist{v}{A}$. It turns out that we can find all such distances with a single run of Dijkstra's algorithm: we add a new vertex $s$ to the graph, and add edges of cost 0 from $s$ to each vertex in $A$. For any vertex $v$, a path from $v$ to $s$ must take some edge from a vertex in $A$ to $s$, and since all such edges have weight 0, the shortest distance from $v$ to $s$ must be the same as the shortest distance from $v$ to any vertex in $A$.
 					</p>
 
+					<h3>Preprocessing Visualization</h3>
+					<p>
+						In the following visualization, we can see an example of the preprocessing step on a graph for a given value of $k$. On the right side we can see a table containing the witnesses for each vertex $v$, which is the closest vertex to $v$ in the color subset group denoted at the top of the table (notice that all nodes are in the blue group, a subset of blue nodes are in the orange group, a subset of orange nodes are in the green group, etc). When you hover over a cell in the table, a pink circle appears on the left image. The pink circle represents the bunch corresponding to $v$, which encapsulates all of the nodes that we pre-calculate distances for (the distances are also noted on the drawn edges).
+					</p>
 					<iframe src="./index2.html" title="Preprocessing Visualization"></iframe>
 					<iframe src="./index4.html" title="Query Visualization"></iframe>
 
