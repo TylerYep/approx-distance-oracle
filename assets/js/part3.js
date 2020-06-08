@@ -89,13 +89,17 @@ function findClosestVertex(A_i, v) {
 
 // END OF ADO CODE
 
+let data = [];
 
 function main() {
     const pointData = createRandomPoints();
     const A = createKSubsets(pointData);
     const tableData = generateTableData(A, pointData);
-    drawPoints(pointData);
-    console.log(tableData);
+    for (i = 0; i < pointData.length; i++) {
+        const witnesses = tableData[i];
+        data.push({ ...pointData[i], witnesses });
+    }
+    drawPoints(data);
 }
 
 function generateTableData(A, pointData) {
@@ -131,7 +135,7 @@ function drawPoints(pointData) {
             // enter is like a context - this is the element(s) that is about to be added to the page.
             // you can add attributes very simliar to HTML ones.
             enter.append("circle")
-                .attr("id", d => "circle" + d.id)
+                .attr("id", d => "point_" + d.id)
                 .attr("class", "points")  // Make sure this matches selector in the selectAll().
                 .style("fill", d => d.color)
                 .attr("cx", d => xscale(d.x))
@@ -171,12 +175,14 @@ let w = null;
 
 
 function clearLines() {
-    d3.selectAll("g").remove();
+    d3.selectAll(".line_group").remove();
 }
 
 function unselectPoint(point) {
-    clearBunch(point);
-    clearCircle(point);
+    if (point !== u) {
+        clearBunch(point);
+        clearCircle(point);
+    }
 }
 
 function clearBunch({ id }) {
@@ -189,7 +195,7 @@ function clearCircle({ id }) {
 
 function drawLine(start, end, label = "", color = "black") {
     console.log(`Drawing line between ${start.id} and ${end.id}`);
-    let line = svg.append("g");
+    let line = svg.append("g").attr("class", "line_group");
     line.append('line')
         .style("stroke", color)
         .style("stroke-width", 1)
@@ -202,14 +208,40 @@ function drawLine(start, end, label = "", color = "black") {
     line.append("text")
         .attr('text-anchor', 'middle')
         .text(label)
-        .attr("id", `label_${start.id}_${end.id}`)
+        .attr("id", `line_label_${start.id}_${end.id}`)
         .style("user-select", "none")
         .attr("x", xscale(mid_x) - 10)
         .attr("y", yscale(mid_y) + 20)
 }
 
-function drawCircle(center) {
-    // TODO
+function drawCircle(center, color = "red") {
+    const witnesses = data[center.id]["witnesses"];
+    let circle = svg.append("g")
+        .attr("class", "circle_group")
+        .attr("id", `circle_${center.id}`)
+        .lower();
+    for (let [i, witness_id] of Object.entries(witnesses)) {
+        let witness = data[witness_id];
+        const r = (center.id != witness_id) ?
+            xscale(Math.sqrt(squaredDist(center, witness))) : 20;
+        circle.append("circle")
+            .attr("class", "bigCircle")
+            .attr("fill", color)
+            .style("stroke", "black")
+            .style("stroke-dasharray", "3, 3")
+            .attr("opacity", 0.1)
+            .style("user-select", "none")
+            .attr("cx", xscale(center.x))
+            .attr("cy", yscale(center.y))
+            .attr("r", r);
+        circle.append("text")
+            .attr('text-anchor', 'middle')
+            .text(`${i}`)
+            .attr("id", `circle_label_${i}_${witness_id}`)
+            .style("user-select", "none")
+            .attr("x", xscale(center.x) + r)
+            .attr("y", yscale(center.y) + 10 * i);
+    }
 }
 
 function drawBunch(point) {
@@ -219,10 +251,6 @@ function drawBunch(point) {
 
 function query(u, v) {
     // TODO
-}
-
-function getPoint(id) {
-    return d3.select(id);
 }
 
 function handleClick(point) {
@@ -235,7 +263,7 @@ function handleClick(point) {
     u = point;
     // Draw new state
     drawBunch(u);
-    drawCircle(u);
+    drawCircle(u, "blue");
 }
 
 
@@ -243,13 +271,13 @@ function handleMouseOver(point) {
     console.log(`Moused over ${point.id}`);
     v = point;
     drawBunch(v);
-    drawCircle(v);
+    drawCircle(v, "red");
     if (u !== null) {
         // WIP
         // second point being clicked (v)
         // w, estimate = query(u, v);
         const estimate = 0;
-        // : drawLine(u, w, `${squaredDist(u, w)}`);
+        // drawLine(u, w, `${squaredDist(u, w)}`);
         // drawLine(v, w, `${squaredDist(v, w)}`);
         drawLine(u, v, `Estimate: ${estimate} (Actual: ${squaredDist(u, v).toFixed(1)})`);
     }
