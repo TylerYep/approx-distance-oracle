@@ -9,6 +9,7 @@ const COLORS = [
     '#8C564B', '#CFECF9', '#7F7F7F', '#BCBD22', '#17BECF'
 ]; // Tableau-10
 
+
 function squaredDist(a, b) {
     return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2);
 }
@@ -27,30 +28,26 @@ function weightedCoinFlip(prob) {
     return Math.random() < prob;
 }
 
-const k = 5;
-const NUM_POINTS = 15;
 let selected = [];
-let frozenCircle = false;
+const kBar = document.getElementById("kBar");
+const pointBar = document.getElementById("pointBar");
+
+let k;
+let numPoints;
 
 // ADO CODE
 
 function createRandomPoints() {
-    const ORIGIN = {x: 5, y: 0};
-    let closestToOrigin = 0;
     let pointData = [];
-    for (let i = 0; i < NUM_POINTS; i++) {
+    for (let i = 0; i < numPoints; i++) {
         const newPoint = {
             x: getRandFloat(1, 9),
             y: getRandFloat(-5, 4),
             color: COLORS[0],
             id: i,
         }
-        if (i > 0 && squaredDist(newPoint, ORIGIN) < squaredDist(pointData[closestToOrigin], ORIGIN)) {
-            closestToOrigin = i;
-        }
         pointData.push(newPoint);
     }
-    selected = [closestToOrigin];
     return pointData;
 }
 
@@ -58,7 +55,7 @@ function createRandomPoints() {
 function createKSubsets(pointData) {
     let A = [pointData];
     for (let i = 1; i < k; i++) {
-        let prob = Math.pow(NUM_POINTS, (-1 / k));
+        let prob = Math.pow(numPoints, (-1 / k));
         let newArr = [];
         for (let j = 0; j < A[i-1].length; j++) {
             if (weightedCoinFlip(prob)) {
@@ -86,22 +83,38 @@ function findClosestVertex(A_i, v) {
     return closestVertex;
 }
 
-
 // END OF ADO CODE
 
+kBar.addEventListener("input", main);
+pointBar.addEventListener("input", main);
 
 function main() {
+    // remove all elements on the page
+    svg.selectAll("*").remove();
+    const bunchTable = document.getElementById("bunchTable")
+    if (bunchTable) bunchTable.remove();
+
+    // get values of k and numPoints from the slider bars
+    k = parseInt(kBar.value);
+    numPoints = parseInt(pointBar.value);
+    document.getElementById("kValue").innerHTML = `(k = ${k})`
+    document.getElementById("pointValue").innerHTML = `(# of Nodes = ${numPoints})`;
+
+    // Compute i-centers and witnesses using the algorithm.
     const pointData = createRandomPoints();
     const A = createKSubsets(pointData);
     const tableData = generateTableData(A, pointData);
-    drawPoints(pointData);
-    tabulate(tableData, [...Array(tableData.length).keys()], [...Array(k).keys()], pointData, A);
+    const A_ids = A.map(vset => vset.map(v => v.id));
+
+    // Draw results
+    drawPoints(pointData, A_ids, 0);
+    tabulate(tableData, [...Array(tableData.length).keys()], [...Array(k).keys()], pointData, A_ids);
 }
 
 
 function generateTableData(A, pointData) {
     let tableData = [];
-    for (let v = 0; v < NUM_POINTS; v++) {
+    for (let v = 0; v < numPoints; v++) {
         let row = {};
         for (let i = 0; i < k; i++) {
             const vert = findClosestVertex(A[i], pointData[v]);
@@ -120,7 +133,7 @@ function generateTableData(A, pointData) {
 
 
 function tabulate(data, rowHeaders, columnHeaders, pointData, A) {
-	const table = d3.select('#table-container').append('table');
+	const table = d3.select('#table-container').append('table').attr("id", "bunchTable");
 	const thead = table.append('thead');
 	const tbody = table.append('tbody');
 
@@ -129,7 +142,7 @@ function tabulate(data, rowHeaders, columnHeaders, pointData, A) {
         .data([""].concat(columnHeaders))
         .enter()
         .append('th')
-        .text(d => d)
+        // .text("Table Column Headers")
         .style("background-color", (_, i) => i > 0 ? COLORS[i-1] : "none");
 
     const rows = tbody.selectAll('tr')
@@ -149,27 +162,18 @@ function tabulate(data, rowHeaders, columnHeaders, pointData, A) {
         .enter()
         .append('td')
         .text(d => d.value)
-        .on("click", function(_) {
-            frozenCircle = !frozenCircle;
-            // d3.select(this).style("fill", "white");
-        })
         .on("mouseover", d => {
-            // if (!frozenCircle) {
             selected = [d.row];
             drawLines(pointData, d);
             drawCircles([pointData[d.row]], [pointData[d.value]]);
-            drawPoints(pointData);
-            // }
+            drawPoints(pointData, A, d.column);
         })
         .on("mouseout", _ => {
-            // if (!frozenCircle) {
-            // Needs to be a function to have access to "this".
-            // d3.select(this).style("fill", d => d.color);
-
             // Remove all drawn artifacts
+            selected = [];
             drawLines([]);
             drawCircles([]);
-            // }
+            drawPoints(pointData, null, null);
         });
 }
 
@@ -193,8 +197,8 @@ function drawLines(pointData, d) {
 }
 
 
-function drawPoints(pointData) {
-    const DOTSIZE = 10;
+function drawPoints(pointData, A, k) {
+    const DOTSIZE = 12;
 
     // .join() is the best way I've found to use d3. The first line uses selectAll(), which
     // finds all of the elements on the page with class "points". If there are none, it creates them.
@@ -223,16 +227,26 @@ function drawPoints(pointData) {
             });
             enter.append("text")
                 .attr("class", d => "label" + d.id)
+                .attr("x", d => xscale(d.x) + 20)
+                .attr("y", d => yscale(d.y) + 5)
                 .style("text-anchor", "middle")
                 .style("user-select", "none")
-                .attr("x", d => xscale(d.x) + 20)
-                .attr("y", d => yscale(d.y) + 10)
                 .text((_, i) => i);
         },
         // update allows you to call drawPoints() again, and instead of creating brand new points,
         // skip the enter => code and do just this instead.
         // raise() moves the points to the top layer of the SVG, kind of like z-index
         update => update.raise()
+            .style("fill", d => {
+                if (selected.length == 0) {
+                    return d.color;
+                } else if (selected[0] === d.id && A[k].includes(d.id)) {
+                    return COLORS[k];
+                } else if (selected[0] !== d.id) {
+                    return A[k].includes(d.id) ? COLORS[k] : "grey";
+                }
+                return d.color;
+            })
         // You can also add a custom remove => function
         // remove => remove.do stuff
     );

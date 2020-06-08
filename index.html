@@ -158,6 +158,8 @@
 					</p>
 
 					<iframe src="./index2.html" title="Preprocessing Visualization"></iframe>
+					<iframe src="./index4.html" title="Query Visualization"></iframe>
+
 					<p>
 						We could find the second set of distances by running Dijkstra's algorithm from each vertex, but that just means solving APSP, so we need something more efficient. First, we can notice that we are only searching for distances from vertices in $V$ to vertices in $V \setminus A$, so instead of running Dijkstra's algorithm from every $v \in V$, we can run it from every $w \in V \setminus A$. Second, we do not need to know the distances from each $w \in V \setminus A$ to every vertex in the graph; we only need the distances from each $w \in V \setminus A$ to the vertices $v$ such that $\dist{v}{w} < \dist{v}{A}$. This means that we can run a modified version of Dijkstra's algorithm that only finds these distances. Recall that Dijkstra's algorithm maintains shortest distance estimates for each vertex, and that when we update a vertex's shortest distance estimate, we enqueue the vertex with priority equal to its shortest distance estimate. In our modified version of Dijkstra's algorithm, we only update the shortest distance estimate of a vertex $v$, and only enqueue $v$, if the new shortest distance estimate is less than $\dist{v}{A}$. This ensures that we only calculate the distances we need to know, and once we have those distances, we can store them in a hash table for easy lookup later on. To recount, given a graph $G = (V, E)$, our entire preprocessing algorithm is as follows:
 						<ol>
