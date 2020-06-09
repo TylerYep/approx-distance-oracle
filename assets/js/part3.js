@@ -31,13 +31,13 @@ const k = 5;
 const NUM_POINTS = 15;
 let selected = [];
 let frozenCircle = false;
+let pointData = []
 
 // ADO CODE
 
 function createRandomPoints() {
     const ORIGIN = { x: 5, y: 0 };
     let closestToOrigin = 0;
-    let pointData = [];
     for (let i = 0; i < NUM_POINTS; i++) {
         const newPoint = {
             x: getRandFloat(1, 9),
@@ -86,21 +86,67 @@ function findClosestVertex(A_i, v) {
     return closestVertex;
 }
 
+function generateBunches() {
+    // # Initialize table of calculated distances
+    data.distances = {};
+    for (v in data.A[0]) {
+        data.distances[v] = {};
+        for (w in data.A[0]) {
+            const d = (v === w) ? 0 : Math.sqrt(squaredDist(data.A[0][v], data.A[0][w]));
+            data.distances[v][w] = d;
+        }
+    }
+    // Create bunches
+    data.B = {};
+    for (v in data.A[0]) {
+        data.B[v] = new Set();
+        for (i = 1; i <= k; i++) {
+            for (let [_, { id: w }] of Object.entries(data.A[i - 1])) {
+                const witness = data.p[v][i];
+                if (data.distances[v][w] <= data.distances[v][witness]) {
+                    data.B[v].add(w);
+                }
+            }
+        }
+        console.log(data.A[k - 1]);
+        for (let [_, { id: w }] of Object.entries(data.A[k - 1])) {
+            data.B[v].add(w);
+        }
+    }
+}
+
+
+function query(u, v) {
+    w = u;
+    i = 0;
+    while (!data.B[v.id].has(w.id)) {
+        i += 1;
+        [u, v] = [v, u];
+        w = data.A[0][data.p[u.id][i]];
+    }
+    console.log(u, v, w);
+    return [w, data.distances[u.id][w.id] + data.distances[w.id][v.id]];
+}
+
+
 
 // END OF ADO CODE
 
-let data = [];
+let data = {};
 
 function main() {
     const pointData = createRandomPoints();
-    const A = createKSubsets(pointData);
-    const tableData = generateTableData(A, pointData);
-    for (i = 0; i < pointData.length; i++) {
-        const witnesses = tableData[i];
-        data.push({ ...pointData[i], witnesses });
-    }
-    drawPoints(data);
+    data.A = createKSubsets(pointData);
+    data.p = generateTableData(data.A, pointData);
+    // console.log(data);
+    generateBunches();
+    console.log(data);
+    drawPoints(pointData);
+    data.u = null;
+    data.v = null;
+    data.w = null;
 }
+
 
 function generateTableData(A, pointData) {
     let tableData = [];
@@ -167,35 +213,43 @@ function drawPoints(pointData) {
         // You can also add a custom remove => function
         // remove => remove.do stuff
     );
+    // Add arrowheads
+    svg.append("svg:defs")
+        .selectAll("marker")
+        .data(["end"])  // Different link/path types can be defined here 
+        .enter().append("svg:marker") // This section adds in the arrows 
+        .attr("id", String) //this makes the id as 'end', coming from data
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 15)
+        .attr("refY", -1.5)
+        .attr("markerWidth", 10)
+        .attr("markerHeight", 10)
+        .attr("orient", "auto")
+        .append("svg:path")
+        .attr("d", "M0,-5L10,0L0,5");
+
 }
 
-let u = null;
-let v = null;
-let w = null;
-
-
 function clearLines() {
-    d3.selectAll(".line_group").remove();
+    d3.selectAll(".distance").remove();
 }
 
 function unselectPoint(point) {
-    if (point !== u) {
+    if (point !== data.u) {
         clearBunch(point);
-        clearCircle(point);
     }
 }
 
 function clearBunch({ id }) {
-    d3.select(`#bunch_${id}`).remove();
+    d3.selectAll(`.bunch_${id}`).remove();
+    d3.selectAll(`#circle_${id}`).remove();
 }
 
-function clearCircle({ id }) {
-    d3.select(`#circle_${id}`).remove();
-}
-
-function drawLine(start, end, label = "", color = "black") {
+function drawLine(start, end, { label = "", class_id = "", color = "black" }) {
     console.log(`Drawing line between ${start.id} and ${end.id}`);
-    let line = svg.append("g").attr("class", "line_group");
+    let line = svg.append("g")
+        .attr("class", class_id)
+        .classed("line_group", true);
     line.append('line')
         .style("stroke", color)
         .style("stroke-width", 1)
@@ -203,6 +257,7 @@ function drawLine(start, end, label = "", color = "black") {
         .attr("y1", yscale(start.y))
         .attr("x2", xscale(end.x))
         .attr("y2", yscale(end.y))
+        .attr("marker-end", "url(#end)");
     let mid_x = start.x + ((end.x - start.x) / 2);
     let mid_y = start.y + ((end.y - start.y) / 2);
     line.append("text")
@@ -215,105 +270,89 @@ function drawLine(start, end, label = "", color = "black") {
 }
 
 function drawCircle(center, color = "red") {
-    const witnesses = data[center.id]["witnesses"];
+    const witnesses = data.p[center.id];
     let circle = svg.append("g")
         .attr("class", "circle_group")
         .attr("id", `circle_${center.id}`)
         .lower();
-    for (let [i, witness_id] of Object.entries(witnesses)) {
-        let witness = data[witness_id];
+    for (let [i, witness_id] of Object.entries(witnesses).reverse()) {
+        let witness = data.A[0][witness_id];
         const r = (center.id != witness_id) ?
             xscale(Math.sqrt(squaredDist(center, witness))) : 20;
         circle.append("circle")
             .attr("class", "bigCircle")
-            .attr("fill", color)
+            .attr("fill", "none")
             .style("stroke", "black")
             .style("stroke-dasharray", "3, 3")
-            .attr("opacity", 0.1)
             .style("user-select", "none")
             .attr("cx", xscale(center.x))
             .attr("cy", yscale(center.y))
             .attr("r", r);
-        circle.append("text")
-            .attr('text-anchor', 'middle')
-            .text(`${i}`)
-            .attr("id", `circle_label_${i}_${witness_id}`)
-            .style("user-select", "none")
-            .attr("x", xscale(center.x) + r)
-            .attr("y", yscale(center.y) + 10 * i);
+        // circle.append("text")
+        //     .attr('text-anchor', 'middle')
+        //     .text(`${i}`)
+        //     .attr("id", `circle_label_${i}_${witness_id}`)
+        //     .style("user-select", "none")
+        //     .attr("x", xscale(center.x) + r)
+        //     .attr("y", yscale(center.y) + 10 * i);
     }
 }
 
 function drawBunch(point) {
-    // TODO: Create smooth polygon convex hull around points in bunch
-    // http://bl.ocks.org/hollasch/9d3c098022f5524220bd84aae7623478
+    console.log(`Drawing bunch around ${point.id}`);
+    const bunch = data.B[point.id];
+    console.log(bunch, data.p[point.id]);
+    for (let bunch_id of bunch) {
+        if (bunch_id == point.id) continue;
+        const bunch_node = data.A[0][bunch_id];
+        const d = data.distances[point.id][bunch_id];
+        drawLine(point, bunch_node, { class_id: `bunch_${point.id}`, color: "grey" });
+    }
 }
 
-function query(u, v) {
-    // TODO
-}
 
 function handleClick(point) {
     console.log(`Clicked ${point.id}`);
-    console.log(point);
     // Clear old state
-    clearBunch(point);
-    clearCircle(point);
+    if (data.u !== null) {
+        clearBunch(data.u);
+    }
     // Update u
-    u = point;
+    data.u = point;
     // Draw new state
-    drawBunch(u);
-    drawCircle(u, "blue");
+    drawBunch(data.u);
+    drawCircle(data.u, "blue");
 }
 
 
 function handleMouseOver(point) {
     console.log(`Moused over ${point.id}`);
-    v = point;
-    drawBunch(v);
-    drawCircle(v, "red");
-    if (u !== null) {
-        // WIP
+    data.v = point;
+    drawBunch(data.v);
+    drawCircle(data.v);
+    if (data.u !== null) {
         // second point being clicked (v)
-        // w, estimate = query(u, v);
-        const estimate = 0;
-        // drawLine(u, w, `${squaredDist(u, w)}`);
-        // drawLine(v, w, `${squaredDist(v, w)}`);
-        drawLine(u, v, `Estimate: ${estimate} (Actual: ${squaredDist(u, v).toFixed(1)})`);
+        let [w, estimate] = query(data.u, data.v);
+        estimate = estimate.toFixed(1);
+        drawLine(data.u, w, { label: `${data.distances[data.u.id][w.id].toFixed(1)}`, class_id: "distance" });
+        drawLine(data.v, w, { label: `${data.distances[data.v.id][w.id].toFixed(1)}`, class_id: "distance" });
+        const actual = data.distances[data.u.id][data.v.id].toFixed(1);
+        drawLine(data.u, data.v, { label: `Estimate: ${estimate} (Actual: ${actual})`, class_id: "distance" });
     }
-    d3.select(this).style("fill", ON_COLOR);
 }
 
 function handleMouseOut(point) {
+    console.log(data.u, data.v, point.id);
     console.log(`Moused out ${point.id}`);
-    unselectPoint(v);
+    if (point !== data.u) {
+        unselectPoint(point);
+    }
     clearLines();
-    v = null;
-    d3.select(this).style("fill", () => point.color);
+    if (data.v === point) {
+        data.v = null;
+    }
 }
 
-
-
-// function drawCircles(centerPointData, radiusPoint = []) {
-//     svg.selectAll(".bigCircle").data(d3.zip(centerPointData, radiusPoint), d => d[0].id).join(
-//         enter => {
-//             enter.append("circle")
-//                 .attr("class", "bigCircle")
-//                 .attr("fill", "red")
-//                 .style("stroke", "black")
-//                 .style("stroke-dasharray", "3, 3")
-//                 .attr("opacity", 0.25)
-//                 .attr("cx", d => xscale(d[0].x))
-//                 .attr("cy", d => yscale(d[0].y))
-//                 .attr("r", d =>
-//                     (d[0].id != d[1].id) ? xscale(Math.sqrt(squaredDist(d[0], d[1]))) : 20
-//                 );
-//         },
-//         update => update.attr("r", d =>
-//             (d[0].id != d[1].id) ? xscale(Math.sqrt(squaredDist(d[0], d[1]))) : 20
-//         )
-//     );
-// }
 
 
 main();
