@@ -78,7 +78,7 @@
 				<ul class="actions special">
 					<li><a href="#one" class="button">Problem</a></li>
 					<li><a href="#a2-prepro" class="button">Preprocessing</a></li>
-					<li><a href="#" class="button">Query</a></li>
+					<li><a href="#a2-prepro" class="button">Query</a></li>
 					<li><a href="#a2-analysis" class="button">Runtime & Space Analysis</a></li>
 					<li><a href="#four" class="button">Practical Application</a></li>
 				</ul>
@@ -92,9 +92,6 @@
 					The all-pairs shortest paths problem (APSP) asks us to, given a graph $G = \paren{V, E}$ with $n$ vertices and $m$ edges, find the shortest paths between all pairs of vertices. Algorithms solving APSP do so in time $\bigotilde{mn}$ and produce a data structure of size $\bigo{n^2}$, but in many cases, this may be computationally expensive, and we may not care about all distances or exact distances. The goal of an Approximate Distance Oracle is to preprocess a weighted undirected graph in time $\smallo{mn}$, produce a data structure of size $\smallo{n^2}$, and give approximate distances in time $\bigo{1}$. Below, we walk through different attempts at creating such a data structure, refining our previous version at each iteration to eventually arrive at something efficient and approximately correct. We have $\dist{u}{v}$ denote the shortest distance between vertices $u$ and $v$ and $\edist{u}{v}$ denote an approximation of that distance.
 				</p>
 			</div>
-		</section>
-
-		<section id="two" class="main style1">
 			<div class="container">
 				<h2>First Attempt: A simple probabilistic solution</h2>
 				<p>
@@ -119,9 +116,6 @@
 					So, how good of an approximation is this? We will certainly not get an underapproximation since a path from $u$ to $w$ to $v$ must be at least as long as the shortest path from $u$ to $v$. It turns out, however, that our approximation may be arbitrarily large since $u$ and $v$ may be nearby while everything in $A$ may be distant from $u$. This leads us to our second attempt.
 				</p>
 			</div>
-		</section>
-
-		<section id="three" class="main style1">
 			<div class="container">
 				<h2>Second Attempt: Limiting error</h2>
 				<p>
