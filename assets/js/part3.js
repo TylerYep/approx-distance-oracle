@@ -86,6 +86,7 @@ function findClosestVertex(A_i, v) {
     return closestVertex;
 }
 
+
 function generateBunches() {
     // # Initialize table of calculated distances
     data.distances = {};
@@ -127,7 +128,6 @@ function query(u, v) {
     console.log(u, v, w);
     return [w, data.distances[u.id][w.id] + data.distances[w.id][v.id]];
 }
-
 
 
 // END OF ADO CODE
@@ -190,21 +190,6 @@ function drawPoints(pointData) {
                 .on("mouseover", handleMouseOver)
                 .on("mouseout", handleMouseOut)
                 .on("click", handleClick)
-            // .on("mouseover", function (_) {
-            //     // Needs to be a function to have access to "this".
-            //     d3.select(this).style("fill", ON_COLOR);
-            // })
-            // .on("mouseout", function (_) {
-            //     // Needs to be a function to have access to "this".
-            //     d3.select(this).style("fill", d => d.color);
-            // });
-            enter.append("text")
-                .attr("class", d => "label" + d.id)
-                .style("text-anchor", "middle")
-                .style("user-select", "none")
-                .attr("x", d => xscale(d.x) + 20)
-                .attr("y", d => yscale(d.y) + 10)
-                .text((_, i) => i);
         },
         // update allows you to call drawPoints() again, and instead of creating brand new points,
         // skip the enter => code and do just this instead.
@@ -216,8 +201,8 @@ function drawPoints(pointData) {
     // Add arrowheads
     svg.append("svg:defs")
         .selectAll("marker")
-        .data(["end"])  // Different link/path types can be defined here 
-        .enter().append("svg:marker") // This section adds in the arrows 
+        .data(["end"]) // Different link/path types can be defined here
+        .enter().append("svg:marker") // This section adds in the arrows
         .attr("id", String) //this makes the id as 'end', coming from data
         .attr("viewBox", "0 -5 10 10")
         .attr("refX", 15)
@@ -269,20 +254,21 @@ function drawLine(start, end, { label = "", class_id = "", color = "black" }) {
         .attr("y", yscale(mid_y) + 20)
 }
 
-function drawCircle(center, color = "red") {
+function drawCircle(center) {
     const witnesses = data.p[center.id];
     let circle = svg.append("g")
         .attr("class", "circle_group")
         .attr("id", `circle_${center.id}`)
         .lower();
-    for (let [i, witness_id] of Object.entries(witnesses).reverse()) {
+    for (let [_, witness_id] of Object.entries(witnesses).reverse()) {
         let witness = data.A[0][witness_id];
         const r = (center.id != witness_id) ?
             xscale(Math.sqrt(squaredDist(center, witness))) : 20;
         circle.append("circle")
             .attr("class", "bigCircle")
             .attr("fill", "none")
-            .style("stroke", "black")
+            .style("stroke", witness.color)
+            .style("stroke-width", 2)
             .style("stroke-dasharray", "3, 3")
             .style("user-select", "none")
             .attr("cx", xscale(center.x))
@@ -321,7 +307,7 @@ function handleClick(point) {
     data.u = point;
     // Draw new state
     drawBunch(data.u);
-    drawCircle(data.u, "blue");
+    drawCircle(data.u);
 }
 
 
@@ -334,12 +320,22 @@ function handleMouseOver(point) {
         // second point being clicked (v)
         let [w, estimate] = query(data.u, data.v);
         estimate = estimate.toFixed(1);
-        drawLine(data.u, w, { label: `${data.distances[data.u.id][w.id].toFixed(1)}`, class_id: "distance" });
-        drawLine(data.v, w, { label: `${data.distances[data.v.id][w.id].toFixed(1)}`, class_id: "distance" });
+        drawLine(data.u, w, {
+            label: `${data.distances[data.u.id][w.id].toFixed(1)}`,
+            class_id: "distance"
+        });
+        drawLine(data.v, w, {
+            label: `${data.distances[data.v.id][w.id].toFixed(1)}`,
+            class_id: "distance"
+        });
         const actual = data.distances[data.u.id][data.v.id].toFixed(1);
-        drawLine(data.u, data.v, { label: `Estimate: ${estimate} (Actual: ${actual})`, class_id: "distance" });
+        drawLine(data.u, data.v, {
+            label: `Estimate: ${estimate} (Actual: ${actual})`,
+            class_id: "distance"
+        });
     }
 }
+
 
 function handleMouseOut(point) {
     console.log(data.u, data.v, point.id);
@@ -352,7 +348,6 @@ function handleMouseOut(point) {
         data.v = null;
     }
 }
-
 
 
 main();

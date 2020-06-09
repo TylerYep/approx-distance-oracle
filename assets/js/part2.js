@@ -206,7 +206,6 @@ function drawLines(pointData, d) {
                 const rotation = Math.atan2(d[0].y - d[1].y, d[0].x - d[1].x);
                 return `translate(${xCoord},${yCoord}) rotate(${rotation})`;
             })
-
     );
 }
 
