@@ -98,7 +98,7 @@
 			<div class="container">
 				<h2>First Attempt: A simple probabilistic solution</h2>
 				<p>
-					We cannot store all distances in space $\smallo{n^2}$, so we must make some choices about what distances to store. A natural approach is to choose these distances probabilistically. We can construct a set $A \subseteq V$ by adding each $v \in V$ to $A$ with some probability $q$. Once we have this set, for every $v \in V$ and $w \in A$, we calculate and store the $\dist{v}{w}$ (we explore the best way to do this in \cref{ss:prepro}). When we receive some query $\dist{u}{v}$, if one of $u$ and $v$ is in $A$, then we've already calculated the shortest distance, and we can return that. Otherwise, we can choose some $w \in A$, say, the $w\in A$ that is least distant from $u$, and return the approximation $\edist{u}{v} = \dist{u}{w} + \dist{w}{v}$.
+					We cannot store all distances in space $\smallo{n^2}$, so we must make some choices about what distances to store. A natural approach is to choose these distances probabilistically. We can construct a set $A \subseteq V$ by adding each $v \in V$ to $A$ with some probability $q$. Once we have this set, for every $v \in V$ and $w \in A$, we calculate and store the $\dist{v}{w}$ (we explore the best way to do this in our <a href="#a2-prepro">section on preprocessing</a>). When we receive some query $\dist{u}{v}$, if one of $u$ and $v$ is in $A$, then we've already calculated the shortest distance, and we can return that. Otherwise, we can choose some $w \in A$, say, the $w\in A$ that is least distant from $u$, and return the approximation $\edist{u}{v} = \dist{u}{w} + \dist{w}{v}$.
 				</p>
 				<div class="container">
 					<div class="row gtr-150">
