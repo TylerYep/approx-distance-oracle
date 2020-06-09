@@ -140,6 +140,10 @@ let data = {};
 kBar.addEventListener("input", main);
 pointBar.addEventListener("input", main);
 
+function displayInfo() {
+    const info = document.getElementById("table_container");
+}
+
 function main() {
     svg.selectAll("*").remove();
     data = {};
@@ -219,8 +223,8 @@ function drawPoints(pointData) {
         .enter().append("svg:marker") // This section adds in the arrows
         .attr("id", String) // this makes the id as 'end', coming from data
         .attr("viewBox", "0 -5 10 10")
-        .attr("refX", 15)
-        .attr("refY", -1.5)
+        .attr("refX", 10)
+        .attr("refY", 0)
         .attr("markerWidth", 10)
         .attr("markerHeight", 10)
         .attr("orient", "auto")
@@ -306,7 +310,7 @@ function drawBunch(point) {
         if (bunch_id == point.id) continue;
         const bunch_node = data.A[0][bunch_id];
         // const d = data.distances[point.id][bunch_id];
-        drawLine(point, bunch_node, { class_id: `bunch_${point.id}`, color: "grey" });
+        drawLine(point, bunch_node, { class_id: `bunch_${point.id}`, color: "lightgrey" });
     }
 }
 
@@ -316,44 +320,75 @@ function handleClick(point) {
     // Clear old state
     if (data.u !== null) {
         clearBunch(data.u);
+        unlabelPoint(data.u, "u");
     }
     // Update u
     data.u = point;
+    labelPoint(point, "u");
+
     // Draw new state
     drawBunch(data.u);
     drawCircle(data.u);
 }
 
+function labelPoint(point, label) {
+    svg.append("text")
+        .attr('text-anchor', 'middle')
+        .text(label)
+        .attr("id", `point_${point.id}_label_${label}`)
+        .style("user-select", "none")
+        .style("font-size", "24px")
+        .style("font-weight", "bold")
+        .attr("x", xscale(point.x) + 20)
+        .attr("y", yscale(point.y) + 20);
+}
+
+function unlabelPoint(point, label) {
+    svg.select(`#point_${point.id}_label_${label}`).remove();
+}
 
 function handleMouseOver(point) {
     console.log(`Moused over ${point.id}`);
     data.v = point;
+    if (data.u !== null) {
+        labelPoint(point, "v");
+    }
     drawBunch(data.v);
     drawCircle(data.v);
     if (data.u !== null) {
         // second point being clicked (v)
         let [w, estimate] = query(data.u, data.v);
-        estimate = estimate.toFixed(1);
+        const uv_estimate = estimate.toFixed(1);
+        const uv_actual = data.distances[data.u.id][data.v.id].toFixed(1);
+        const uw_actual = data.distances[data.u.id][w.id].toFixed(1);
+        const wv_actual = data.distances[data.v.id][w.id].toFixed(1);
+        document.getElementById("uv_actual").innerHTML = `${uv_actual}`;
+        document.getElementById("uv_estimate").innerHTML = `${uv_estimate}`;
+        document.getElementById("uw_actual").innerHTML = `${uw_actual}`;
+        document.getElementById("wv_actual").innerHTML = `${wv_actual}`;
+
         if (w.id !== data.u.id && w.id !== data.v.id) {
+            data.w = w;
+            labelPoint(w, "w");
             drawLine(data.u, w, {
-                label: `${data.distances[data.u.id][w.id].toFixed(1)}`,
+                // label: `${}`,
                 class_id: "distance",
                 marker_end: "url(#end)",
                 stroke_width: 2
             });
             drawLine(w, data.v, {
-                label: `${data.distances[data.v.id][w.id].toFixed(1)}`,
+                // label: `${}`,
                 class_id: "distance",
                 marker_end: "url(#end)",
                 stroke_width: 2
             });
         }
-        const actual = data.distances[data.u.id][data.v.id].toFixed(1);
         drawLine(data.u, data.v, {
-            label: `Estimate: ${estimate} (Actual: ${actual})`,
+            // label: `Estimate: ${estimate} (Actual: ${actual})`,
             class_id: "distance",
             marker_end: "url(#end)",
-            stroke_width: 2
+            stroke_width: 2,
+            color: "red"
         });
     }
 }
@@ -361,13 +396,21 @@ function handleMouseOver(point) {
 function handleMouseOut(point) {
     console.log(data.u, data.v, point.id);
     console.log(`Moused out ${point.id}`);
+
     if (point !== data.u) {
-        unselectPoint(point);
+        unselectPoint(point, "u");
+        unlabelPoint(point, "u");
     }
     clearLines();
     if (data.v === point) {
         data.v = null;
+        unlabelPoint(point, "v");
     }
+    unlabelPoint(data.w, "w");
+    document.getElementById("uv_actual").innerHTML = "";
+    document.getElementById("uv_estimate").innerHTML = "";
+    document.getElementById("uw_actual").innerHTML = "";
+    document.getElementById("wv_actual").innerHTML = "";
 }
 
 
