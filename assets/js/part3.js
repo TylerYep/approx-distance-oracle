@@ -27,8 +27,12 @@ function weightedCoinFlip(prob) {
     return Math.random() < prob;
 }
 
-const k = 5;
-const NUM_POINTS = 15;
+let k;
+let numPoints;
+
+const kBar = document.getElementById("kBar");
+const pointBar = document.getElementById("pointBar");
+
 let selected = [];
 let frozenCircle = false;
 let pointData = []
@@ -38,7 +42,7 @@ let pointData = []
 function createRandomPoints() {
     const ORIGIN = { x: 5, y: 0 };
     let closestToOrigin = 0;
-    for (let i = 0; i < NUM_POINTS; i++) {
+    for (let i = 0; i < numPoints; i++) {
         const newPoint = {
             x: getRandFloat(1, 9),
             y: getRandFloat(-5, 4),
@@ -58,7 +62,7 @@ function createRandomPoints() {
 function createKSubsets(pointData) {
     let A = [pointData];
     for (let i = 1; i < k; i++) {
-        let prob = Math.pow(NUM_POINTS, (-1 / k));
+        let prob = Math.pow(numPoints, (-1 / k));
         let newArr = [];
         for (let j = 0; j < A[i - 1].length; j++) {
             if (weightedCoinFlip(prob)) {
@@ -109,7 +113,6 @@ function generateBunches() {
                 }
             }
         }
-        console.log(data.A[k - 1]);
         for (let [_, { id: w }] of Object.entries(data.A[k - 1])) {
             data.B[v].add(w);
         }
@@ -134,10 +137,24 @@ function query(u, v) {
 
 let data = {};
 
+kBar.addEventListener("input", main);
+pointBar.addEventListener("input", main);
+
 function main() {
-    const pointData = createRandomPoints();
+    svg.selectAll("*").remove();
+    data = {};
+    pointData = [];
+    console.log("hi");
+
+    k = parseInt(kBar.value);
+    numPoints = parseInt(pointBar.value);
+    document.getElementById("kValue").innerHTML = `(k = ${k})`
+    document.getElementById("pointValue").innerHTML = `(# of Nodes = ${numPoints})`;
+
+    pointData = createRandomPoints();
     data.A = createKSubsets(pointData);
-    data.p = generateTableData(data.A, pointData);
+    data.p = generateTableData(pointData);
+    console.log(data.p, k, numPoints);
     generateBunches();
     console.log(data);
     drawPoints(pointData);
@@ -147,17 +164,15 @@ function main() {
 }
 
 
-function generateTableData(A, pointData) {
+function generateTableData(pointData) {
     let tableData = [];
-    for (let v = 0; v < NUM_POINTS; v++) {
+    for (let v = 0; v < numPoints; v++) {
         let row = {};
         for (let i = 0; i < k; i++) {
-            const vert = findClosestVertex(A[i], pointData[v]);
+            const vert = findClosestVertex(data.A[i], pointData[v]);
             if (vert == null) {
                 // If it doesn't work, refresh and try again
-                const newPointData = createRandomPoints();
-                const newA = createKSubsets(newPointData);
-                return generateTableData(newA, newPointData);
+                main();
             }
             row[i] = vert.id;
         }
@@ -229,19 +244,19 @@ function clearBunch({ id }) {
     d3.selectAll(`#circle_${id}`).remove();
 }
 
-function drawLine(start, end, { label = "", class_id = "", color = "black" }) {
+function drawLine(start, end, { label = "", class_id = "", color = "black", stroke_width = 1, marker_end = "none" }) {
     console.log(`Drawing line between ${start.id} and ${end.id}`);
     let line = svg.append("g")
         .attr("class", class_id)
         .classed("line_group", true);
     line.append('line')
         .style("stroke", color)
-        .style("stroke-width", 1)
+        .style("stroke-width", stroke_width)
         .attr("x1", xscale(start.x))
         .attr("y1", yscale(start.y))
         .attr("x2", xscale(end.x))
         .attr("y2", yscale(end.y))
-        .attr("marker-end", "url(#end)");
+        .attr("marker-end", marker_end);
     let mid_x = start.x + ((end.x - start.x) / 2);
     let mid_y = start.y + ((end.y - start.y) / 2);
     line.append("text")
@@ -319,22 +334,29 @@ function handleMouseOver(point) {
         // second point being clicked (v)
         let [w, estimate] = query(data.u, data.v);
         estimate = estimate.toFixed(1);
-        drawLine(data.u, w, {
-            label: `${data.distances[data.u.id][w.id].toFixed(1)}`,
-            class_id: "distance"
-        });
-        drawLine(data.v, w, {
-            label: `${data.distances[data.v.id][w.id].toFixed(1)}`,
-            class_id: "distance"
-        });
+        if (w.id !== data.u.id && w.id !== data.v.id) {
+            drawLine(data.u, w, {
+                label: `${data.distances[data.u.id][w.id].toFixed(1)}`,
+                class_id: "distance",
+                marker_end: "url(#end)",
+                stroke_width: 2
+            });
+            drawLine(w, data.v, {
+                label: `${data.distances[data.v.id][w.id].toFixed(1)}`,
+                class_id: "distance",
+                marker_end: "url(#end)",
+                stroke_width: 2
+            });
+        }
         const actual = data.distances[data.u.id][data.v.id].toFixed(1);
         drawLine(data.u, data.v, {
             label: `Estimate: ${estimate} (Actual: ${actual})`,
-            class_id: "distance"
+            class_id: "distance",
+            marker_end: "url(#end)",
+            stroke_width: 2
         });
     }
 }
-
 
 function handleMouseOut(point) {
     console.log(data.u, data.v, point.id);
