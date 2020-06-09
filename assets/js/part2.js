@@ -165,7 +165,7 @@ function tabulate(data, rowHeaders, columnHeaders, pointData, A) {
         .on("mouseover", d => {
             selected = [d.row];
             drawLines(pointData, d);
-            drawCircles([pointData[d.row]], [pointData[d.value]]);
+            drawCircles([pointData[d.row]], [pointData[d.value]], d.column);
             drawPoints(pointData, A, d.column);
         })
         .on("mouseout", _ => {
@@ -267,20 +267,20 @@ function drawPoints(pointData, A, k) {
 }
 
 
-function drawCircles(centerPointData, radiusPoint = []) {
+function drawCircles(centerPointData, radiusPoint = [], color = null) {
     svg.selectAll(".bigCircle").data(d3.zip(centerPointData, radiusPoint), d => d[0].id).join(
         enter => {
             enter.append("circle")
             .attr("class", "bigCircle")
-            .attr("fill", "red")
-            .style("stroke", "black")
+            .attr("fill", "rgb(255,204,203)")
+            .style("stroke", COLORS[color])
+            .style("stroke-width", 3)
             .style("stroke-dasharray", "3, 3")
-            .attr("opacity", 0.25)
             .attr("cx", d => xscale(d[0].x))
             .attr("cy", d => yscale(d[0].y))
             .attr("r", d =>
                 (d[0].id != d[1].id) ? xscale(Math.sqrt(squaredDist(d[0], d[1]))) : 20
-            );
+            ).lower();
         },
         update => update.attr("r", d =>
             (d[0].id != d[1].id) ? xscale(Math.sqrt(squaredDist(d[0], d[1]))) : 20

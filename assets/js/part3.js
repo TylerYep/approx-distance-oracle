@@ -138,7 +138,6 @@ function main() {
     const pointData = createRandomPoints();
     data.A = createKSubsets(pointData);
     data.p = generateTableData(data.A, pointData);
-    // console.log(data);
     generateBunches();
     console.log(data);
     drawPoints(pointData);
@@ -168,7 +167,7 @@ function generateTableData(A, pointData) {
 }
 
 function drawPoints(pointData) {
-    const DOTSIZE = 10;
+    const DOTSIZE = 12;
 
     // .join() is the best way I've found to use d3. The first line uses selectAll(), which
     // finds all of the elements on the page with class "points". If there are none, it creates them.
@@ -203,7 +202,7 @@ function drawPoints(pointData) {
         .selectAll("marker")
         .data(["end"]) // Different link/path types can be defined here
         .enter().append("svg:marker") // This section adds in the arrows
-        .attr("id", String) //this makes the id as 'end', coming from data
+        .attr("id", String) // this makes the id as 'end', coming from data
         .attr("viewBox", "0 -5 10 10")
         .attr("refX", 15)
         .attr("refY", -1.5)
@@ -268,7 +267,7 @@ function drawCircle(center) {
             .attr("class", "bigCircle")
             .attr("fill", "none")
             .style("stroke", witness.color)
-            .style("stroke-width", 2)
+            .style("stroke-width", 3)
             .style("stroke-dasharray", "3, 3")
             .style("user-select", "none")
             .attr("cx", xscale(center.x))
@@ -291,7 +290,7 @@ function drawBunch(point) {
     for (let bunch_id of bunch) {
         if (bunch_id == point.id) continue;
         const bunch_node = data.A[0][bunch_id];
-        const d = data.distances[point.id][bunch_id];
+        // const d = data.distances[point.id][bunch_id];
         drawLine(point, bunch_node, { class_id: `bunch_${point.id}`, color: "grey" });
     }
 }

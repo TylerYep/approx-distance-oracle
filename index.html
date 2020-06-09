@@ -103,13 +103,15 @@
 				<div class="container">
 					<div class="row gtr-150">
 						<div class="col-4 col-12-medium">
-							<img src="images/1graph.png" />
+							<img src="images/1graph.png" style="width: 100%;"/>
 						</div>
 						<div class="col-4 col-12-medium">
-							<img src="images/2graph.png" />
+							<img src="images/2graph.png" style="width: 100%;"/>
 						</div>
 						<div class="col-4 col-12-medium">
-							<img src="images/2graph.png" />
+							<i>
+								Given the graph $G$ shown above, nodes that are shaded represent the set $A\subseteq V$. The only shortest paths stored are the ones shown in the table. Since both $a, d \not \in A $, to find $\dist{a}{d}$, we arbitrarily pick some $w\in A$. Suppose we pick $w = b$, then $\edist{a}{d} = \dist{a}{b} + \dist{b}{d} = 1 + 3 = 4.$
+							</i>
 						</div>
 					</div>
 				</div>
@@ -125,14 +127,25 @@
 				<p>
 					We need some way to ensure that if two vertices are near each other, we know both of their distances to some vertex that is near both of them. However, we also want to keep $|A|$ small to maintain time and space efficiency. Our solution is to, for each vertex $v$, calculate the distances from $v$ to the vertices in $A$ as well as some vertices near $v$. Specifically, we calculate the distances from $v$ to each vertex in a bunch $\bunch{v}$, where $\bunch{v}$ is the union of $A$ with the set of all vertices nearer to $v$ than all vertices in $A$. In other words, a vertex $u$ is in $\bunch{v}$ if
 					<ul>
-						<li>$u \in A$ or</li>
+						<li>$u \in A$, or</li>
 						<li>$u$ is strictly less distant from $v$ than all vertices in $A$ (we describe how to find these vertices in our <a href="#a2-prepro">section on preprocessing</a>).</li>
 					</ul>
 				</p>
 				<p>
 					The idea is that if some vertices $u$ and $v$ are not too distant from each other, then either $u \in \bunch{v}$, or there is some $w$ that is in both $\bunch{u}$ and $\bunch{v}$ and is not too far from either of them. In our algorithm, we use the vertex in $A$ that is nearest to $v$, which we denote $\p{v}$.
 				</p>
-				<!-- TODO: Add visualization -->
+				<div class="container">
+					<div class="row gtr-150">
+						<div class="col-6 col-12-medium">
+							<img src="images/bunch.png" style="width: 100%;"/>
+						</div>
+						<div class="col-6 col-12-medium">
+							<i>
+								The construction of $B(v)$ in 2 dimensional Euclidean space. The vertices in $A$ are shaded. Each arrow represents a distance calculated between the two nodes. The vertex in $A$ that is closest to $v$ is denoted as $p(v).$
+							</i>
+						</div>
+					</div>
+				</div>
 				<p>
 					Once we have done our preprocessing, when we receive a query for the shortest distance between some $u$ and $v$, we do the following:
 					<ol>
@@ -174,6 +187,11 @@
 						In the following visualization, we can see an example of the preprocessing step on a graph for a given value of $k$. On the right side we can see a table containing the witnesses for each vertex $v$, which is the closest vertex to $v$ in the color subset group denoted at the top of the table (notice that all nodes are in the blue group, a subset of blue nodes are in the orange group, a subset of orange nodes are in the green group, etc). When you hover over a cell in the table, a pink circle appears on the left image. The pink circle represents the bunch corresponding to $v$, which encapsulates all of the nodes that we pre-calculate distances for (the distances are also noted on the drawn edges).
 					</p>
 					<iframe src="./index2.html" title="Preprocessing Visualization"></iframe>
+
+					<h3>Query Visualization</h3>
+					<p>
+						In the following visualization, we can see...
+					</p>
 					<iframe src="./index4.html" title="Query Visualization"></iframe>
 
 					<p>
@@ -298,7 +316,6 @@
 				</div>
 				<svg id='vis' style='width: 1100px; height: 500px; z-index: 200;'></svg>
 				<div id='map' style='width: 1100px; height: 500px;'></div>
-				<svg id='histogramVis' style="position: relative;"></svg>
 			</div>
 		</section>
 

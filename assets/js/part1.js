@@ -93,6 +93,7 @@ function colorPoints() {
 function drawLines(pointData, edgeData) {
     svg.selectAll(".lines").data(edgeData).join(
         enter => enter.append("line")
+            .attr("class", "lines")
             .attr("stroke", "black")
             .attr("strokewidth", 5)
             .attr("x1", d => xscale(pointData[d[0]].x))
@@ -105,7 +106,7 @@ function drawLines(pointData, edgeData) {
 
 
 function drawPoints(pointData) {
-    const DOTSIZE = 10;
+    const DOTSIZE = 12;
 
     svg.selectAll(".points").data(pointData, d => d.id).join(
         enter => {
@@ -127,6 +128,7 @@ function drawPoints(pointData) {
             enter.append("text")
                 .attr("class", d => "label" + d.id)
                 .style("text-anchor", "middle")
+                .style("user-select", "none")
                 .attr("x", d => xscale(d.x) + 20)
                 .attr("y", d => yscale(d.y) + 10)
                 .text((_, i) => i);
