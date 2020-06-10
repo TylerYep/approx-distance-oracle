@@ -338,7 +338,7 @@ function labelPoint(point, label) {
         .style("font-size", "24px")
         .style("font-weight", "bold")
         .attr("x", xscale(point.x) + 20)
-        .attr("y", yscale(point.y) + 20);
+        .attr("y", yscale(point.y) + ((label === "p(v)") ? -20 : 20));
 }
 
 function unlabelPoint(point, label) {
