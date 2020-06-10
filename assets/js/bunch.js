@@ -372,15 +372,9 @@ function handleMouseOut(point) {
         unlabelPoint(point, "v");
         const p_v = data.A[0][Object.entries(data.p[point.id]).reverse()[0][1]];
         console.log(p_v);
-        unlabelPoint(p_v, "p(v)");// I can't figure this part out :(
+        unlabelPoint(p_v, "p(v)");
 
     }
-
-    // unlabelPoint(data.w, "w");
-    // document.getElementById("uv_actual").innerHTML = "";
-    // document.getElementById("uv_estimate").innerHTML = "";
-    // document.getElementById("uw_actual").innerHTML = "";
-    // document.getElementById("wv_actual").innerHTML = "";
 }
 
 
