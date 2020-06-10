@@ -45,7 +45,7 @@ function createRandomPoints() {
     for (let i = 0; i < numPoints; i++) {
         const newPoint = {
             x: getRandFloat(1, 9),
-            y: getRandFloat(-5, 4),
+            y: getRandFloat(-3, 4),
             color: COLORS[0],
             id: i,
         }
