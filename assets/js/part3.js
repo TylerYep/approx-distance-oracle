@@ -2,8 +2,6 @@ const svg = d3.select("#part3");
 const xscale = d3.scaleLinear().domain([0, 6]).range([0, 400]);
 const yscale = d3.scaleLinear().domain([0, 6]).range([400, 0]);
 
-const ON_COLOR = "grey";
-const OFF_COLOR = "black";
 const COLORS = [
     '#126CD9', '#379CCA', '#6DA394', '#ACB36A', '#D4C561',
     '#FCD757', '#F8BC58', '#F58F40', '#F26330', '#FF2700'
@@ -11,11 +9,6 @@ const COLORS = [
 
 function squaredDist(a, b) {
     return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2);
-}
-
-function getRandInt(min, max) {
-    // Includes min and max.
-    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function getRandFloat(min, max) {
@@ -34,8 +27,7 @@ const kBar = document.getElementById("kBar");
 const pointBar = document.getElementById("pointBar");
 
 let selected = [];
-let frozenCircle = false;
-let pointData = []
+let pointData = [];
 
 // ADO CODE
 
@@ -45,7 +37,7 @@ function createRandomPoints() {
     for (let i = 0; i < numPoints; i++) {
         const newPoint = {
             x: getRandFloat(1, 9),
-            y: getRandFloat(-5, 4),
+            y: getRandFloat(-3, 4),
             color: COLORS[0],
             id: i,
         }
@@ -140,9 +132,6 @@ let data = {};
 kBar.addEventListener("input", main);
 pointBar.addEventListener("input", main);
 
-function displayInfo() {
-    const info = document.getElementById("table_container");
-}
 
 function main() {
     svg.selectAll("*").remove();
