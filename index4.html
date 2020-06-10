@@ -9,6 +9,21 @@
 
 <body>
 	<div class="main">
+		<div class="rcol" style="margin: 10px; vertical-align: top;">
+			<div id="table-container">
+				<h1 style="color: #52c2ca;">ADO Query</h1>
+				<!-- <h2 style="color: #2e6c80;">Instructions:</h2> -->
+				<h2 style="color: #2e6c80;">Query:</h2>
+				<p><strong>True Distance:</strong> <span id="uv_actual"></span></p>
+				<strong>u&nbsp;</strong>to&nbsp;<strong>w</strong>: <span id="uw_actual"></span>
+				<br/>
+				&nbsp;&nbsp;&nbsp;&nbsp;+
+				<br/>
+				<strong>w&nbsp;</strong>to&nbsp;<strong>v</strong>: <span id="wv_actual"></span>
+				<p><strong> = Approximate Distance:</strong> <span id="uv_estimate"></span></p>
+
+			</div>
+		</div>
 		<div class="lcol" style="margin: 10px;">
 			Value of k:
 			<input id="kBar" class="slider" type="range" min="2" max="8" value="5">
@@ -17,37 +32,7 @@
 			Value of n:
 			<input id="pointBar" class="slider" type="range" min="1" max="30" value="15">
 			<span id="pointValue">(# of nodes = 15)</span>
-
 			<svg id='part3' style="margin-top: 10px;"></svg>
-		</div>
-		<div class="rcol" style="margin: 10px;">
-			<div id="table-container">
-				<h1 style="color: #52c2ca;">Visualization 2: Queries</h1>
-				<h2 style="color: #2e6c80;">Instructions:</h2>
-				<ul>
-					<li>Hover over any node to see its <strong>bunch</strong>&nbsp;[grey lines] (the distances
-						calculated for that node) and its <strong>witnesses</strong>&nbsp;[colored dashed circles] (the
-						nodes
-						that are closest to it in each randomly selected subset of the graph).</li>
-					<li>Click on a node to select it as a starting node for a query. This will fix its bunch and
-						witnesses in place. To change starting node, simply click a different node.</li>
-					<li>Hover over any other node to see its respective bunch and witnesses, and
-						the&nbsp;<strong>approximate distance path</strong>&nbsp;[black arrows] returned by the ADO and
-						the <strong>true shortest path</strong> [red arrow].&nbsp;</li>
-					<li>Adjust the slider bars to change&nbsp;<strong>k</strong> (the number of subsets chosen in the
-						graph) and <strong>n</strong> (the number of nodes in the graph). All nodes will be redrawn for
-						each change.</li>
-				</ul>
-				<h2 style="color: #2e6c80;">Query:</h2>
-				<p><strong>True Distance:</strong> <span id="uv_actual"></span></p>
-				<p><strong>Approximate Distance:</strong> <span id="uv_estimate"></span></p>
-				<ul>
-					<li><strong>u&nbsp;</strong>to&nbsp;<strong>w</strong>: <span id="uw_actual"></span></li>
-					<li><strong>w&nbsp;</strong>to&nbsp;<strong>v</strong>: <span id="wv_actual"></span></li>
-				</ul>
-
-
-			</div>
 		</div>
 	</div>
 	<script src='assets/js/part3.js'></script>

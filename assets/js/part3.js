@@ -148,7 +148,6 @@ function main() {
     svg.selectAll("*").remove();
     data = {};
     pointData = [];
-    console.log("hi");
 
     k = parseInt(kBar.value);
     numPoints = parseInt(pointBar.value);
@@ -248,11 +247,14 @@ function clearBunch({ id }) {
     d3.selectAll(`#circle_${id}`).remove();
 }
 
-function drawLine(start, end, { label = "", class_id = "", color = "black", stroke_width = 1, marker_end = "none" }) {
+function drawLine(start, end, {
+    label = "", class_id = "", color = "black", stroke_width = 1, marker_end = "none"
+}) {
     console.log(`Drawing line between ${start.id} and ${end.id}`);
     let line = svg.append("g")
         .attr("class", class_id)
         .classed("line_group", true);
+    if (color == "lightgrey") line.lower();
     line.append('line')
         .style("stroke", color)
         .style("stroke-width", stroke_width)
@@ -344,7 +346,9 @@ function labelPoint(point, label) {
 }
 
 function unlabelPoint(point, label) {
-    svg.select(`#point_${point.id}_label_${label}`).remove();
+    if (point) {
+        svg.select(`#point_${point.id}_label_${label}`).remove();
+    }
 }
 
 function handleMouseOver(point) {

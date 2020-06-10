@@ -9,15 +9,7 @@
 
 <body>
 	<div class="main">
-		<div class="lcol" style="margin: 10px;">
-			<br />
-			Value of n:
-			<input id="pointBar" class="slider" type="range" min="1" max="30" value="15">
-			<span id="pointValue">(# of nodes = 15)</span>
-
-			<svg id='part3' style="margin-top: 10px;"></svg>
-		</div>
-		<div class="rcol" style="margin: 10px;">
+		<div class="rcol" style="margin: 10px; vertical-align: top;">
 			<div id="table-container">
 				<h1 style="color: #52c2ca;">B(v) for k=2</h1>
 				<h2 style="color: #2e6c80;">Instructions:</h2>
@@ -29,6 +21,13 @@
 				</ul>
 
 			</div>
+		</div>
+		<div class="lcol" style="margin: 10px;">
+			<br />
+			Value of n:
+			<input id="pointBar" class="slider" type="range" min="1" max="30" value="15">
+			<span id="pointValue">(# of nodes = 15)</span>
+			<svg id='bunch' style="margin-top: 10px;"></svg>
 		</div>
 	</div>
 	<script src='assets/js/bunch.js'></script>
