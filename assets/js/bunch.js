@@ -1,4 +1,4 @@
-const svg = d3.select("#part3");
+const svg = d3.select("#bunch");
 const xscale = d3.scaleLinear().domain([0, 6]).range([0, 400]);
 const yscale = d3.scaleLinear().domain([0, 6]).range([400, 0]);
 
@@ -148,7 +148,6 @@ function main() {
     svg.selectAll("*").remove();
     data = {};
     pointData = [];
-    console.log("hi");
 
     k = 2;
     numPoints = parseInt(pointBar.value);
@@ -246,11 +245,13 @@ function clearBunch({ id }) {
     d3.selectAll(`#circle_${id}`).remove();
 }
 
-function drawLine(start, end, { label = "", class_id = "", color = "black", stroke_width = 1, marker_end = "none" }) {
+function drawLine(start, end, {
+    label = "", class_id = "", color = "black", stroke_width = 1, marker_end = "none"
+}) {
     console.log(`Drawing line between ${start.id} and ${end.id}`);
     let line = svg.append("g")
         .attr("class", class_id)
-        .classed("line_group", true);
+        .classed("line_group", true).lower();
     line.append('line')
         .style("stroke", color)
         .style("stroke-width", stroke_width)
@@ -258,7 +259,7 @@ function drawLine(start, end, { label = "", class_id = "", color = "black", stro
         .attr("y1", yscale(start.y))
         .attr("x2", xscale(end.x))
         .attr("y2", yscale(end.y))
-        .attr("marker-end", marker_end);
+        .attr("marker-end", marker_end).lower();
     let mid_x = start.x + ((end.x - start.x) / 2);
     let mid_y = start.y + ((end.y - start.y) / 2);
     line.append("text")

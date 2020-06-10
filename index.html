@@ -261,9 +261,21 @@
 					<iframe src="./index2.html" title="Preprocessing Visualization"></iframe>
 
 					<h3>Query Visualization</h3>
-					<p>
-						In the following visualization, we can see...
-					</p>
+					In the following visualization, hover over any node to see its <strong>bunch</strong>&nbsp;[grey lines] (the distances
+					calculated for that node) and its <strong>witnesses</strong>&nbsp;[colored dashed circles] (the nodes that are closest to it in each randomly selected subset of the graph).
+					<br/>
+					<br/>
+					Then, click on a node to select it as a starting node for a query.
+					This will fix its bunch and
+					witnesses in place. Click a different node to change starting node.
+					<br/>
+					<br/>
+					Hover over any other node to see the&nbsp;<strong>approximate distance path</strong>
+					&nbsp;[black arrows] returned by the ADO, and
+					the <strong>true shortest path</strong> [red arrow].
+					<br/>
+					Adjust the sliders to change&nbsp;<strong>k</strong> (# of subsets chosen in the
+					graph) and <strong>n</strong> (# of nodes in the graph). All nodes will be redrawn.
 					<iframe src="./index4.html" title="Query Visualization"></iframe>
 				<section>
 					<h3>Runtime and Space Analysis</h3>
