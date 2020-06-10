@@ -77,10 +77,11 @@
 				<p>Hello! This is Tyler, Mark, Ivy, and Josh's project for Stanford's <a href="http://web.stanford.edu/class/cs166/"><strong>CS 166: Data Structures</strong></a>.</p>
 				<ul class="actions special">
 					<li><a href="#one" class="button">Problem</a></li>
-					<li><a href="#a2-prepro" class="button">Preprocessing</a></li>
-					<li><a href="#a2-prepro" class="button">Query</a></li>
-					<li><a href="#a2-analysis" class="button">Runtime & Space Analysis</a></li>
-					<li><a href="#four" class="button">Practical Application</a></li>
+					<li><a href="#buildup" class="button">Build Up</a></li>
+					<li><a href="#general-preprocessing" class="button">Preprocessing</a></li>
+					<li><a href="#general-query" class="button">Query</a></li>
+					<li><a href="#general-analysis" class="button">Runtime & Space Analysis</a></li>
+					<li><a href="#general-correctness" class="button">Approximation Correctness</a></li>
 				</ul>
 			</div>
 		</section>
@@ -93,6 +94,7 @@
 				</p>
 			</div>
 			<div class="container">
+				<section id="buildup">
 				<h2>First Attempt: A simple probabilistic solution</h2>
 				<p>
 					We cannot store all distances in space $\smallo{n^2}$, so we must make some choices about what distances to store. A natural approach is to choose these distances probabilistically. We can construct a set $A \subseteq V$ by adding each $v \in V$ to $A$ with some probability $q$. Once we have this set, for every $v \in V$ and $w \in A$, we calculate and store the $\dist{v}{w}$ (we explore the best way to do this in our <a href="#a2-prepro">section on preprocessing</a>). When we receive some query $\dist{u}{v}$, if one of $u$ and $v$ is in $A$, then we've already calculated the shortest distance, and we can return that. Otherwise, we can choose some $w \in A$, say, the $w\in A$ that is least distant from $u$, and return the approximation $\edist{u}{v} = \dist{u}{w} + \dist{w}{v}$.
@@ -248,10 +250,11 @@
 				</section>
 			</div>
 		</section>
-
+		</section>
 		<section class="main style1">
 			<div class="container">
 				<h2>Third Attempt: A more general structure</h2>
+				<section id="general-preprocessing">
 				<h3>Preprocessing</h3>
 				<p>
 					We have improved our algorithm by using an additional subset $A$ to determine which distance to precompute. We would now like to further generalize the structure by using $k+1$ nested subsets instead.
@@ -291,6 +294,8 @@
 						The following visualization shows the values calculated for each node for a value of $k$. The table on the right shows the $i^\text{th}$ witness of $v$ ($p_i(v)$) on the $v^\text{th}$ row and $i^\text{th}$ column. This corresponds to the closest vertex to $v$ in the color subset group denoted at the top of the table. (Notice that all nodes are in the blue group, a subset of blue nodes are in the blue-green group, a subset of blue-green nodes are in the green group, etc.) When you hover over a cell in the table, a pink circle appears on the left image. The pink circle represents the subset of $A_i$ whose distances from $v$ will be calculated. The distances calculated for $B_i(v)$ are indicated by the lines between nodes.
 					</p>
 					<iframe src="./index2.html" title="Preprocessing Visualization"></iframe>
+				</section>
+				<section id="general-query">
 				<h3>Querying</h3>
 					The general intuition is that the $i^\text{th}$ witness $p_i(v)$ for smaller $i$ is closer to $v$, so it would produce a better estimate. However, it is less likely that the distance $\delta(p_i(v),u)$ was calculated. So we aim to find the smallest $i$ where both preprocessed values are available. The resulting algorithm is as follows:
 					<ul>
@@ -332,7 +337,8 @@
 					Adjust the sliders to change&nbsp;<strong>k</strong> (# of subsets chosen in the
 					graph) and <strong>n</strong> (# of nodes in the graph). All nodes will be redrawn.
 					<iframe src="./index4.html" title="Query Visualization"></iframe>
-				<section>
+				</section>
+				<section id="general-correctness">
 					<h3>Approximation Correctness</h3>
 					<p>
 						In each iteration, we first switch $u,v$, so $u' = v$ and $v' = u$. Since the algorithm iterates only when $w=p_{i-1}(u)\not \in B(v)$, this implies that 
@@ -358,6 +364,8 @@
 						Plugging in the above two inequalities into the value returned, we thus have,
 						$$\delta(w,u) + \delta(w,v) \le (k-1) \delta(u,v) + k\delta(u,v) = (2k-1)\delta(u,v).$$
 					</p>
+				</section>	
+				<section id="general-analysis">
 					<h3>Runtime and Space Analysis</h3>
 					<h4>Query Time: $O(1)$</h4>
 					<p>
