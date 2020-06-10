@@ -3,8 +3,8 @@ const xscale = d3.scaleLinear().domain([0, 6]).range([0, 400]);
 const yscale = d3.scaleLinear().domain([0, 6]).range([400, 0]);
 
 const COLORS = [
-    '#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD',
-    '#8C564B', '#CFECF9', '#7F7F7F', '#BCBD22', '#17BECF'
+    '#BBF2F2', '#88E1E7', '#61C2DB', '#3AA2CF', '#3081BB',
+    '#255FA7', '#213A82', '#191A4D', '#11122C', '#000000'
 ]; // Tableau-10
 
 function squaredDist(a, b) {
