@@ -2,8 +2,6 @@ const svg = d3.select("#part2");
 const xscale = d3.scaleLinear().domain([0, 6]).range([0, 400]);
 const yscale = d3.scaleLinear().domain([0, 6]).range([400, 0]);
 
-const ON_COLOR = "grey";
-const OFF_COLOR = "black";
 const COLORS = [
     '#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD',
     '#8C564B', '#CFECF9', '#7F7F7F', '#BCBD22', '#17BECF'
@@ -12,11 +10,6 @@ const COLORS = [
 
 function squaredDist(a, b) {
     return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2);
-}
-
-function getRandInt(min, max) {
-    // Includes min and max.
-    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function getRandFloat(min, max) {
@@ -42,7 +35,7 @@ function createRandomPoints() {
     for (let i = 0; i < numPoints; i++) {
         const newPoint = {
             x: getRandFloat(1, 9),
-            y: getRandFloat(-5, 4),
+            y: getRandFloat(-3, 4),
             color: COLORS[0],
             id: i,
         }
@@ -83,6 +76,19 @@ function findClosestVertex(A_i, v) {
     return closestVertex;
 }
 
+function findFarthestVertex(A_i, v) {
+    let maxDist = 0;
+    let farthestVertex = null;
+    for (let w of A_i) {
+        let computedDist = squaredDist(v, w);
+        if (computedDist > maxDist) {
+            maxDist = computedDist;
+            farthestVertex = w;
+        }
+    }
+    return farthestVertex;
+}
+
 // END OF ADO CODE
 
 kBar.addEventListener("input", main);
@@ -108,21 +114,32 @@ function main() {
 
     // Draw results
     drawPoints(pointData, A_ids, 0);
-    tabulate(tableData, [...Array(tableData.length).keys()], [...Array(k).keys()], pointData, A_ids);
-}
 
+    tabulate(
+        tableData,
+        [...Array(tableData.length).keys()],
+        [...Array(k+1).keys()],
+        pointData,
+        A_ids,
+    );
+}
 
 function generateTableData(A, pointData) {
     let tableData = [];
     for (let v = 0; v < numPoints; v++) {
         let row = {};
-        for (let i = 0; i < k; i++) {
-            const vert = findClosestVertex(A[i], pointData[v]);
-            if (vert == null) {
-                // If it doesn't work, refresh and try again
-                const newPointData = createRandomPoints();
-                const newA = createKSubsets(newPointData);
-                return generateTableData(newA, newPointData);
+        for (let i = 0; i < k + 1; i++) {
+            let vert;
+            if (i == k) {
+                vert = findFarthestVertex(A[0], pointData[v]);
+            } else {
+                vert = findClosestVertex(A[i], pointData[v]);
+                if (vert == null) {
+                    // If it doesn't work, refresh and try again
+                    const newPointData = createRandomPoints();
+                    const newA = createKSubsets(newPointData);
+                    return generateTableData(newA, newPointData);
+                }
             }
             row[i] = vert.id;
         }
@@ -132,7 +149,7 @@ function generateTableData(A, pointData) {
 }
 
 
-function tabulate(data, rowHeaders, columnHeaders, pointData, A) {
+function tabulate(data, rowHeaders, columnHeaders, pointData, A_ids) {
 	const table = d3.select('#table-container').append('table').attr("id", "bunchTable");
 	const thead = table.append('thead');
 	const tbody = table.append('tbody');
@@ -142,7 +159,7 @@ function tabulate(data, rowHeaders, columnHeaders, pointData, A) {
         .data([""].concat(columnHeaders))
         .enter()
         .append('th')
-        // .text("Table Column Headers")
+        .html((_, i) => (i > 0) ? "A" + `${i-1}`.sub() : "")
         .style("background-color", (_, i) => i > 0 ? COLORS[i-1] : "none");
 
     const rows = tbody.selectAll('tr')
@@ -154,19 +171,19 @@ function tabulate(data, rowHeaders, columnHeaders, pointData, A) {
         .text((_, i) => rowHeaders[i])
 
 	rows.selectAll('td')
-        .data((row, r) => columnHeaders.map(col => ({
-            row: r,
+        .data((row, i) => columnHeaders.map(col => ({
+            row: i,
             column: col,
             value: row[col],
         })))
         .enter()
         .append('td')
-        .text(d => d.value)
+        .text((d, i) => (i < k) ? d.value : "none")
         .on("mouseover", d => {
             selected = [d.row];
-            drawLines(pointData, d);
+            drawLines(pointData, d, A_ids);
             drawCircles([pointData[d.row]], [pointData[d.value]], d.column);
-            drawPoints(pointData, A, d.column);
+            drawPoints(pointData, A_ids, d.column);
         })
         .on("mouseout", _ => {
             // Remove all drawn artifacts
@@ -178,11 +195,13 @@ function tabulate(data, rowHeaders, columnHeaders, pointData, A) {
 }
 
 
-function drawLines(pointData, d) {
+function drawLines(pointData, v, A_ids) {
+    console.log(A_ids, v)
     const allPointPairs = d3.cross(pointData, pointData).filter(z =>
-        z[0].id == selected[0]
-        && z[0].id !== z[1].id
-        && squaredDist(z[0], z[1]) <= squaredDist(pointData[d.value], z[0])
+        z[0].id == selected[0] // Must start with center point
+        && z[0].id !== z[1].id // No line to itself
+        && squaredDist(z[0], z[1]) <= squaredDist(pointData[v.value], z[0]) // point must be closer than witness
+        // && (v.column >= k || A_ids[v.column + 1].includes(v.value)) // should not contain anything in A_{i+1}
     );
     svg.selectAll(".lines").data(allPointPairs, d => d.id).join(
         enter => enter.append("line")
@@ -230,15 +249,7 @@ function drawPoints(pointData, A, k) {
             .style("fill", d => d.color)
             .attr("cx", d => xscale(d.x))
             .attr("cy", d => yscale(d.y))
-            .attr("r", DOTSIZE)
-            .on("mouseover", function(_) {
-                // Needs to be a function to have access to "this".
-                d3.select(this).style("fill", ON_COLOR);
-            })
-            .on("mouseout", function(_) {
-                // Needs to be a function to have access to "this".
-                d3.select(this).style("fill", d => d.color);
-            });
+            .attr("r", DOTSIZE);
             enter.append("text")
                 .attr("class", d => "label" + d.id)
                 .attr("x", d => xscale(d.x) + 20)
