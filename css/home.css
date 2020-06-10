@@ -5,8 +5,8 @@ html, body, .main, #part1, #part2, #part3, #bunch {
 }
 
 #bunch {
-	width: 90%;
-	height: 80%;
+	/*width: 90%;*/
+	/*height: 80%;*/
 }
 
 svg {
