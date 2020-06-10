@@ -195,21 +195,21 @@ function tabulate(data, rowHeaders, columnHeaders, pointData, A_ids) {
 
 
 function drawLines(pointData, v, A_ids) {
+    console.log(A_ids)
     const allPointPairs = d3.cross(pointData, pointData).filter(z =>
         z[0].id == selected[0] // Must start with center point
         && z[0].id !== z[1].id // No line to itself
         && (
             squaredDist(z[0], z[1]) === squaredDist(pointData[v.value], z[0]) // is witness
             || (
-                squaredDist(z[0], z[1]) < squaredDist(pointData[v.value], z[0]) // or point is closer than witness
-                                                                                // and is not in A_{i} \ A_{i+1}
-                // && (
-                //     v.column >= k
-                //     || A_ids[v.column].includes(z[1].id)
-                //     && !A_ids[v.column + 1].includes(z[1].id))
-                // )
+                squaredDist(z[0], z[1]) < squaredDist(pointData[v.value], z[0])
+                // or point is closer than witness and is not in A_{i-1} \ A_{i}
+                && (
+                    v.column >= k
+                    || A_ids[v.column - 1].includes(z[1].id)
+                    && !A_ids[v.column].includes(z[1].id))
+                )
             )
-        )
     );
     svg.selectAll(".lines").data(allPointPairs, d => d.id).join(
         enter => enter.append("line")
