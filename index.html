@@ -252,15 +252,48 @@
 		<section class="main style1">
 			<div class="container">
 				<h2>Third Attempt: A more general structure</h2>
-					We have improved our algorithm by using an additional subset $A$ to determine which distance to precompute. We would now like to further generalize the structure by using $k$ subsets instead.
+				<h3>Preprocessing</h3>
+				<p>
+					We have improved our algorithm by using an additional subset $A$ to determine which distance to precompute. We would now like to further generalize the structure by using $k+1$ nested subsets instead.
+				</p>
+				<p>
+					The resulting algorithm is as follows:
+				</p>
+				<ol>
+					<li>
+						<b>Create subsets $A_0,...,A_k$:</b>
+						<ul>
+							<li>$A_0 = V$</li>
+							<li>For $i = 1,...,k-1$: $A_i\subseteq A_{i-1}$ where $A_i$ contains every node in $A_{i-1}$ independently with probability $q$, which we determine in runtime analysis section below</li>
+							<li>$A_k = \empty$</li>
+						</ul>
+					</li>
+					<li>
+						<b>Calculate $\delta(v, A_i):=\min\{\delta(v,w)|w\in A_i\}$ and $p_i(v):=\argmin\{\delta(v,w)|w\in A_i\}$ for each $v\in V$ and $i=1,...,k$:</b> Add vertex $s$ to the graph, and add edges of weight 0 from $s$ to each vertex in $A_i$. Run Dijkstra's algorithm from $s$ as described earlier.
+						<ul>
+							<li>
+								$\delta(A_k, v) := \infty$
+							</li>
+						</ul>
+					</li>
+					<li>
+						<b>Find $B_i(v):=\{w\in A_i\setminus A_{i+1}|\delta(v,w) < \delta{A_{i+1},v}\}$ and calculate distances:</b> Initialize $B_i(v) \gets A_{i+1}$ for each $v \in V$. For each $w \in A_i \setminus A_{i+1}$, run a modified version of Dijkstra's algorithm from $w$: when we are about to update the shortest distance estimate of some vertex $v$ and enqueue $v$, only do so if that estimate is less than $\dist{v}{A_{i+1}}$. If we do update the estimate of a vertex $v$, add $w$ to $B_i{v}$.
+						<ul>
+							<li>
+								The <i>bunch</i> corresponding to $v$ is defined as $B(v):=\bigcup_{i=1}^k B_i(v)$
+							</li>
+						</ul>
+					</li>
 
-					<h3>Preprocessing Visualization</h3>
+				</ol>
+					<h4>Preprocessing Visualization</h4>
 					<p>
-						In the following visualization, we can see an example of the preprocessing step on a graph for a given value of $k$. The table on the right shows the $i^\text{th}$ witness of $v$ ($p_i(v)$) on the $v^\text{th}$ row and $i^\text{th}$ column. This corresponds to the closest vertex to $v$ in the color subset group denoted at the top of the table. (Notice that all nodes are in the blue group, a subset of blue nodes are in the orange group, a subset of orange nodes are in the green group, etc.) When you hover over a cell in the table, a pink circle appears on the left image. The pink circle represents the subset of $A_i$ whose distances from $v$ will be calculated. The distances calculated for $B_i(v)$ are indicated by the lines between nodes.
+						The following visualization shows the values calculated for each node for a value of $k$. The table on the right shows the $i^\text{th}$ witness of $v$ ($p_i(v)$) on the $v^\text{th}$ row and $i^\text{th}$ column. This corresponds to the closest vertex to $v$ in the color subset group denoted at the top of the table. (Notice that all nodes are in the blue group, a subset of blue nodes are in the blue-green group, a subset of blue-green nodes are in the green group, etc.) When you hover over a cell in the table, a pink circle appears on the left image. The pink circle represents the subset of $A_i$ whose distances from $v$ will be calculated. The distances calculated for $B_i(v)$ are indicated by the lines between nodes.
 					</p>
 					<iframe src="./index2.html" title="Preprocessing Visualization"></iframe>
+				<h3>Querying</h3>
 
-					<h3>Query Visualization</h3>
+					<h4>Query Visualization</h4>
 					In the following visualization, hover over any node to see its <strong>bunch</strong>&nbsp;[grey lines] (the distances
 					calculated for that node) and its <strong>witnesses</strong>&nbsp;[colored dashed circles] (the nodes that are closest to it in each randomly selected subset of the graph).
 					<br/>
@@ -278,6 +311,11 @@
 					graph) and <strong>n</strong> (# of nodes in the graph). All nodes will be redrawn.
 					<iframe src="./index4.html" title="Query Visualization"></iframe>
 				<section>
+					<h3>Approximation Correctness</h3>
+					<!-- I switch u,v here from the wiki page, to be consistent with the first part -->
+					<p>
+						In each iteration, we choose $w$ to be the nearest vertex in $A_i$ to $v$, anything nearer to 
+					</p>
 					<h3>Runtime and Space Analysis</h3>
 					<h4>Query Time: $O(1)$</h4>
 					<p>
