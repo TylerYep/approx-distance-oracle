@@ -292,7 +292,29 @@
 					</p>
 					<iframe src="./index2.html" title="Preprocessing Visualization"></iframe>
 				<h3>Querying</h3>
-
+					The general intuition is that the $i^\text{th}$ witness $p_i(v)$ for smaller $i$ is closer to $v$, so it would produce a better estimate. However, it is less likely that the distance $\delta(p_i(v),u)$ was calculated. So we aim to find the smallest $i$ where both preprocessed values are available. The resulting algorithm is as follows:
+					<ul>
+						<li>
+							$w\gets u, i\gets 0$
+						</li>
+						<li>
+							while $w\not \in B(v)$:
+							<ul>
+								<li>
+									$i\gets i+1$
+								</li>
+								<li>
+									$(u,v)\gets (v,u)$
+								</li>
+								<li>
+									$w\gets p_i(u)$
+								</li>
+							</ul>
+						</li>
+						<li>
+							return $\delta(w,u)+\delta(w,v)$
+						</li>
+					</ul>
 					<h4>Query Visualization</h4>
 					In the following visualization, hover over any node to see its <strong>bunch</strong>&nbsp;[grey lines] (the distances
 					calculated for that node) and its <strong>witnesses</strong>&nbsp;[colored dashed circles] (the nodes that are closest to it in each randomly selected subset of the graph).
@@ -312,9 +334,29 @@
 					<iframe src="./index4.html" title="Query Visualization"></iframe>
 				<section>
 					<h3>Approximation Correctness</h3>
-					<!-- I switch u,v here from the wiki page, to be consistent with the first part -->
 					<p>
-						In each iteration, we choose $w$ to be the nearest vertex in $A_i$ to $v$, anything nearer to 
+						In each iteration, we first switch $u,v$, so $u' = v$ and $v' = u$. Since the algorithm iterates only when $w=p_{i-1}(u)\not \in B(v)$, this implies that 
+						$$\delta(w,v) = \delta(p_{i-1}(u),v) \ge \delta(p_i(v),v)$$
+						(otherwise $w$ would have been included in $B_{i-1}(v)$).
+					</p>
+					<p>
+						Since $w' = p_i(u') = p_i(v)$, 
+						$$\begin{aligned}
+						\delta(w',u') &= \delta(p_i(v),v)\\
+						&\le \delta(w,v)\quad\text{(previous result)}\\
+						&\le\delta(w,u) + \delta(u,v)\quad\text{(triangle inequality)}.
+						\end{aligned}$$
+
+						Therefore $\delta(w,u)$ increases by at most $\delta(u,v)$ in each iteration.
+					</p>
+					<p>
+						Since $A_{k-1}\subseteq B(v)$, there are at most $k-1$ iterations. So $$\delta(w,u) \le (k-1) \delta(u,v).$$
+
+						We can also apply the triangle inequality to obtain
+						$$\delta(w,v) \le \delta(w,u) + \delta(u,v) \le k\delta(u,v).$$
+
+						Plugging in the above two inequalities into the value returned, we thus have,
+						$$\delta(w,u) + \delta(w,v) \le (k-1) \delta(u,v) + k\delta(u,v) = (2k-1)\delta(u,v).$$
 					</p>
 					<h3>Runtime and Space Analysis</h3>
 					<h4>Query Time: $O(1)$</h4>
