@@ -207,7 +207,7 @@
 				</section>
 				<section id="a2-analysis">
 					<h3>Runtime and Space Analysis</h3>
-					<h4>Query Time: $O(1)$</h4>	
+					<h4>Query Time: $O(1)$</h4>
 					<p>
 						Notice first that query time is constant: we lookup no more than two distances, and we can lookup the closest vertex in $A$ to each vertex if we store this information during preprocessing.
 					</p>
@@ -341,12 +341,12 @@
 				<section id="general-correctness">
 					<h3>Approximation Correctness</h3>
 					<p>
-						In each iteration, we first switch $u,v$, so $u' = v$ and $v' = u$. Since the algorithm iterates only when $w=p_{i-1}(u)\not \in B(v)$, this implies that 
+						In each iteration, we first switch $u,v$, so $u' = v$ and $v' = u$. Since the algorithm iterates only when $w=p_{i-1}(u)\not \in B(v)$, this implies that
 						$$\delta(w,v) = \delta(p_{i-1}(u),v) \ge \delta(p_i(v),v)$$
 						(otherwise $w$ would have been included in $B_{i-1}(v)$).
 					</p>
 					<p>
-						Since $w' = p_i(u') = p_i(v)$, 
+						Since $w' = p_i(u') = p_i(v)$,
 						$$\begin{aligned}
 						\delta(w',u') &= \delta(p_i(v),v)\\
 						&\le \delta(w,v)\quad\text{(previous result)}\\
@@ -364,7 +364,7 @@
 						Plugging in the above two inequalities into the value returned, we thus have,
 						$$\delta(w,u) + \delta(w,v) \le (k-1) \delta(u,v) + k\delta(u,v) = (2k-1)\delta(u,v).$$
 					</p>
-				</section>	
+				</section>
 				<section id="general-analysis">
 					<h3>Runtime and Space Analysis</h3>
 					<h4>Query Time: $O(1)$</h4>
@@ -372,7 +372,7 @@
 						Our query time is now $\bigo{k}$, which, if we treat $k$ as a constant, is constant time.
 					</p>
 
-					<h4>Preprocessing Time: $O(kmn^{1/k})$</h4>	
+					<h4>Preprocessing Time: $O(kmn^{1/k})$</h4>
 					<p>
 						Let $n$ be the number of vertices and $m$ be the number of edges. As in our <a href="#a2-analysis">analysis for our second attempt</a>, we can analyze preprocessing time by finding the expected size of $\bunch{v}$ for each vertex $v$. In particular, for each $0 \le i \lt k$, when we run Dijkstra's algorithm from a vertex $w \in A_i \setminus A_{i+1}$, we only visit the vertices $v$ where $\dist{v}{w} \lt \dist{v}{A_{i+1}}$. At each vertex $v$ that we visit, we consider the edges that touch $v$, the set of which we denote $\edges{v}$. Thus, our runtime is bounded by
 						$$\begin{aligned}
@@ -420,7 +420,7 @@
 						\end{aligned}$$
 						This gives a runtime of $\bigo{\paren{q^{k-1}n + \frac{k-1}{q}} \cdot m}$, so we must choose $q$ in terms of $n$ to minimize $q^{k-1}n + \frac{k-1}{q}$. Choosing $q = n^{-1/k}$, this gives us a runtime of $\bigo{\paren{\paren{n^{-1/k}}^{k-1}n + \frac{k-1}{n^{-1/k}}} \cdot m} = \bigo{\paren{\paren{n^{-1/k}}^k + kn^{1/k}}\cdot m} =\bigo{kmn^{1/k}}$.
 					</p>
-					<h4>Space Usage: $\bigo{kn^\frac{k+1}{k}}$</h4>	
+					<h4>Space Usage: $\bigo{kn^\frac{k+1}{k}}$</h4>
 					<p>
 						Given what we know from our runtime analysis, our analysis of the size of the data structure produced is much simpler. For each vertex $v$, our data structure stores each $\pp{i}{v}$, and the distance from $v$ to each vertex in $\bunch{v}$. Recall from our runtime analysis that $\ev{\abs{\bunch{v}}} \le q^{k-1}n + \frac{k-1}{q} = \bigo{kn^{1/k}}$, and thus we see that the expected size of our data structure is $\bigo{n \cdot kn^{1/k}} = \bigo{kn^\frac{k+1}{k}}$.
 					</p>
