@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+
+<head>
+	<link rel="stylesheet" href="css/home.css">
+	<link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+	<script src='https://d3js.org/d3.v5.min.js'></script>
+	<title>Interactive Bunch Visualization</title>
+</head>
+
+<body>
+	<div class="main">
+		<div class="lcol" style="margin: 10px;">
+			<br />
+			Value of n:
+			<input id="pointBar" class="slider" type="range" min="1" max="30" value="15">
+			<span id="pointValue">(# of nodes = 15)</span>
+
+			<svg id='part3' style="margin-top: 10px;"></svg>
+		</div>
+		<div class="rcol" style="margin: 10px;">
+			<div id="table-container">
+				<h1 style="color: #52c2ca;">B(v) for k=2</h1>
+				<h2 style="color: #2e6c80;">Instructions:</h2>
+				<ul>
+					<li>Hover over any node <strong><i>v</i></strong> to see its <strong>bunch <i>B(v)</i></strong>&nbsp;[grey lines] (the distances
+						calculated for that node) and its <strong>witnesses</strong>&nbsp;[colored dashed circles] (the
+						nodes
+						that are closest to it in each randomly selected subset of the graph).</li>
+				</ul>
+
+			</div>
+		</div>
+	</div>
+	<script src='assets/js/bunch.js'></script>
+</body>
+
+</html>

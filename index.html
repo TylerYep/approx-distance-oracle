@@ -119,7 +119,7 @@
 			<div class="container">
 				<h2>Second Attempt: Limiting error</h2>
 				<p>
-					We need some way to ensure that if two vertices are near each other, we know both of their distances to some vertex that is near both of them. However, we also want to keep $|A|$ small to maintain time and space efficiency. Our solution is to, for each vertex $v$, calculate the distances from $v$ to the vertices in $A$ as well as some vertices near $v$. Specifically, we calculate the distances from $v$ to each vertex in a bunch $\bunch{v}$, where $\bunch{v}$ is the union of $A$ with the set of all vertices nearer to $v$ than all vertices in $A$. In other words, a vertex $u$ is in $\bunch{v}$ if
+					We need some way to ensure that if two vertices are near each other, we know their distances to some vertex that is near both of them. However, we also want to keep $|A|$ small to maintain time and space efficiency. Our solution is to, for each vertex $v$, calculate the distances from $v$ to the vertices in $A$ as well as some vertices near $v$. Specifically, we calculate the distances from $v$ to each vertex in a bunch $\bunch{v}$, where $\bunch{v}$ is the union of $A$ with the set of all vertices nearer to $v$ than all vertices in $A$. In other words, a vertex $u$ is in $\bunch{v}$ if
 					<ul>
 						<li>$u \in A$, or</li>
 						<li>$u$ is strictly less distant from $v$ than all vertices in $A$ (we describe how to find these vertices in our <a href="#a2-prepro">section on preprocessing</a>).</li>
@@ -147,6 +147,11 @@
 						<li>Otherwise, choose $\p{v}$ to be the vertex in $A$ that is nearest to $v$. We know that $\p{v} \in \bunch{u}$ because $A \subseteq \bunch{u}$, so return $\dist{u}{\p{v}} + \dist{\p{v}}{v}$.</li>
 					</ol>
 				</p>
+				<h3>Interactive Bunch Visualization</h3>
+					<p>
+						The following visualization shows the construction of $B(v)$ in 2 dimensional Euclidean space for any $v$. The vertices in $A$ are shaded dark grey. Each light grey line represents a distance calculated for $v$. The vertex in $A$ that is closest to $v$ is denoted as $p(v)$.
+					<iframe src="./bunch.html" title="Interactive Bunch Visualization"></iframe>
+				<h3>Approximation Correctness</h3>
 				<p>
 					Now let's consider how good of an approximation this gives us. If $u \in \bunch{v}$, then we get an exact answer, so suppose that $u \not\in \bunch{v}$. Because we choose $w$ to be the nearest vertex in $A$ to $v$, anything that is nearer to $v$ than $w$ is in $\bunch{v}$, and since $u \not\in \bunch{v}$, we know that $\dist{w}{v} < \dist{u}{v}$. Since we can follow a path from $u$ to $v$ to $w$, and the shortest path from $u$ to $w$ is at least as short as that path, we know that
 					$$\begin{aligned}
@@ -173,21 +178,21 @@
 						</ol>
 					</p>
 					<p>
-						We can find the first set of distances by running Dijkstra's algorithm from each vertex in $A$. Recall that our query algorithm needs to know for each $v$ the distance to $\p{v}$, the nearest vertex in $A$ to $v$. We can calculate and store this information as we run Dijkstra's algorithm. Before we find the second set of vertices, it would help to know how close each vertex is to its nearest vertex in $A$. For a vertex $v$, we denote this distance as $\dist{v}{A}$. It turns out that we can find all such distances with a single run of Dijkstra's algorithm: we add a new vertex $s$ to the graph, and add edges of cost 0 from $s$ to each vertex in $A$. For any vertex $v$, a path from $v$ to $s$ must take some edge from a vertex in $A$ to $s$, and since all such edges have weight 0, the shortest distance from $v$ to $s$ must be the same as the shortest distance from $v$ to any vertex in $A$.
+						We can find the first set of distances by running Dijkstra's algorithm from each vertex in $A$. Recall that our query algorithm needs to know for each $v$ the distance to $\p{v}$, the nearest vertex in $A$ to $v$. We can calculate and store this information as we run Dijkstra's algorithm. Before we find the second set of vertices, it would help to know how close each vertex is to its nearest vertex in $A$. For a vertex $v$, we denote this distance as $\dist{v}{A}.$ It turns out that we can find all such distances with a single run of Dijkstra's algorithm: we add a new vertex $s$ to the graph, and add edges of cost 0 from $s$ to each vertex in $A$. For any vertex $v$, a path from $v$ to $s$ must take some edge from a vertex in $A$ to $s$, and since all such edges have weight 0, the shortest distance from $v$ to $s$ must be the same as the shortest distance from $v$ to any vertex in $A$.
 					</p>
 
-					<h3>Preprocessing Visualization</h3>
-					<p>
-						In the following visualization, we can see an example of the preprocessing step on a graph for a given value of $k$. On the right side we can see a table containing the witnesses for each vertex $v$, which is the closest vertex to $v$ in the color subset group denoted at the top of the table (notice that all nodes are in the blue group, a subset of blue nodes are in the orange group, a subset of orange nodes are in the green group, etc). When you hover over a cell in the table, a pink circle appears on the left image. The pink circle represents the bunch corresponding to $v$, which encapsulates all of the nodes that we pre-calculate distances for (the distances are also noted on the drawn edges).
-					</p>
-					<iframe src="./index2.html" title="Preprocessing Visualization"></iframe>
-
-					<h3>Query Visualization</h3>
-					<p>
-						In the following visualization, we can see...
-					</p>
-					<iframe src="./index4.html" title="Query Visualization"></iframe>
-
+					<div class="container">
+						<div class="row gtr-150">
+							<div class="col-6 col-12-medium">
+								<img src="images/dijkstra-graph.png" style="width: 100%;"/>
+							</div>
+							<div class="col-6 col-12-medium">
+								<i>
+									Graph $G$ from above can be converted to the graph $G'$ shown on the left so that Dijkstra's algorithm can be used to calculate $\dist{v}{A}:=\min_{w\in A}{\dist{v}{w}} = \dist{v}{s}.$
+								</i>
+							</div>
+						</div>
+					</div>
 					<p>
 						We could find the second set of distances by running Dijkstra's algorithm from each vertex, but that just means solving APSP, so we need something more efficient. First, we can notice that we are only searching for distances from vertices in $V$ to vertices in $V \setminus A$, so instead of running Dijkstra's algorithm from every $v \in V$, we can run it from every $w \in V \setminus A$. Second, we do not need to know the distances from each $w \in V \setminus A$ to every vertex in the graph; we only need the distances from each $w \in V \setminus A$ to the vertices $v$ such that $\dist{v}{w} < \dist{v}{A}$. This means that we can run a modified version of Dijkstra's algorithm that only finds these distances. Recall that Dijkstra's algorithm maintains shortest distance estimates for each vertex, and that when we update a vertex's shortest distance estimate, we enqueue the vertex with priority equal to its shortest distance estimate. In our modified version of Dijkstra's algorithm, we only update the shortest distance estimate of a vertex $v$, and only enqueue $v$, if the new shortest distance estimate is less than $\dist{v}{A}$. This ensures that we only calculate the distances we need to know, and once we have those distances, we can store them in a hash table for easy lookup later on. To recount, given a graph $G = (V, E)$, our entire preprocessing algorithm is as follows:
 						<ol>
@@ -242,6 +247,18 @@
 			<div class="container">
 				<h2>Third Attempt: A more general structure</h2>
 				<!-- TODO: write algorithm -->
+
+					<h3>Preprocessing Visualization</h3>
+					<p>
+						In the following visualization, we can see an example of the preprocessing step on a graph for a given value of $k$. On the right side we can see a table containing the witnesses for each vertex $v$, which is the closest vertex to $v$ in the color subset group denoted at the top of the table (notice that all nodes are in the blue group, a subset of blue nodes are in the orange group, a subset of orange nodes are in the green group, etc). When you hover over a cell in the table, a pink circle appears on the left image. The pink circle represents the bunch corresponding to $v$, which encapsulates all of the nodes that we pre-calculate distances for (the distances are also noted on the drawn edges).
+					</p>
+					<iframe src="./index2.html" title="Preprocessing Visualization"></iframe>
+
+					<h3>Query Visualization</h3>
+					<p>
+						In the following visualization, we can see...
+					</p>
+					<iframe src="./index4.html" title="Query Visualization"></iframe>
 				<section>
 					<h3>Runtime and Space Analysis</h3>
 					<p>
