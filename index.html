@@ -252,11 +252,11 @@
 		<section class="main style1">
 			<div class="container">
 				<h2>Third Attempt: A more general structure</h2>
-				<!-- TODO: write algorithm -->
+					We have improved our algorithm by using an additional subset $A$ to determine which distance to precompute. We would now like to further generalize the structure by using $k$ subsets instead.
 
 					<h3>Preprocessing Visualization</h3>
 					<p>
-						In the following visualization, we can see an example of the preprocessing step on a graph for a given value of $k$. On the right side we can see a table containing the witnesses for each vertex $v$, which is the closest vertex to $v$ in the color subset group denoted at the top of the table (notice that all nodes are in the blue group, a subset of blue nodes are in the orange group, a subset of orange nodes are in the green group, etc). When you hover over a cell in the table, a pink circle appears on the left image. The pink circle represents the bunch corresponding to $v$, which encapsulates all of the nodes that we pre-calculate distances for (the distances are also noted on the drawn edges).
+						In the following visualization, we can see an example of the preprocessing step on a graph for a given value of $k$. The table on the right shows the $i^\text{th}$ witness of $v$ ($p_i(v)$) on the $v^\text{th}$ row and $i^\text{th}$ column. This corresponds to the closest vertex to $v$ in the color subset group denoted at the top of the table. (Notice that all nodes are in the blue group, a subset of blue nodes are in the orange group, a subset of orange nodes are in the green group, etc.) When you hover over a cell in the table, a pink circle appears on the left image. The pink circle represents the subset of $A_i$ whose distances from $v$ will be calculated. The distances calculated for $B_i(v)$ are indicated by the lines between nodes.
 					</p>
 					<iframe src="./index2.html" title="Preprocessing Visualization"></iframe>
 
