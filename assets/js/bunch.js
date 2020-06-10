@@ -333,7 +333,7 @@ function labelPoint(point, label) {
     svg.append("text")
         .attr('text-anchor', 'middle')
         .text(label)
-        .attr("id", `point_${point.id}_label_${label}`)
+        .attr("id", `point_${point.id}_label_${(label === "p(v)") ? "p" : label}`)
         .style("user-select", "none")
         .style("font-size", "24px")
         .style("font-weight", "bold")
@@ -342,6 +342,7 @@ function labelPoint(point, label) {
 }
 
 function unlabelPoint(point, label) {
+    if (label === "p(v)") label = "p";
     svg.select(`#point_${point.id}_label_${label}`).remove();
 }
 
@@ -354,7 +355,7 @@ function handleMouseOver(point) {
     drawBunch(data.v);
     drawCircle(data.v);
     labelPoint(data.A[0][Object.entries(data.p[point.id]).reverse()[0][1]], "p(v)");
-    
+
 }
 
 function handleMouseOut(point) {
@@ -369,13 +370,17 @@ function handleMouseOut(point) {
     if (data.v === point) {
         data.v = null;
         unlabelPoint(point, "v");
-        unlabelPoint(data.A[0][Object.entries(data.p[point.id]).reverse()[0][1]], "p(v)");// I can't figure this part out :(
+        const p_v = data.A[0][Object.entries(data.p[point.id]).reverse()[0][1]];
+        console.log(p_v);
+        unlabelPoint(p_v, "p(v)");// I can't figure this part out :(
+
     }
-    unlabelPoint(data.w, "w");
-    document.getElementById("uv_actual").innerHTML = "";
-    document.getElementById("uv_estimate").innerHTML = "";
-    document.getElementById("uw_actual").innerHTML = "";
-    document.getElementById("wv_actual").innerHTML = "";
+
+    // unlabelPoint(data.w, "w");
+    // document.getElementById("uv_actual").innerHTML = "";
+    // document.getElementById("uv_estimate").innerHTML = "";
+    // document.getElementById("uw_actual").innerHTML = "";
+    // document.getElementById("wv_actual").innerHTML = "";
 }
 
 
