@@ -5,8 +5,8 @@ const yscale = d3.scaleLinear().domain([0, 6]).range([400, 0]);
 const ON_COLOR = "grey";
 const OFF_COLOR = "black";
 const COLORS = [
-    '#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD',
-    '#8C564B', '#CFECF9', '#7F7F7F', '#BCBD22', '#17BECF'
+    '#126CD9', '#379CCA', '#6DA394', '#ACB36A', '#D4C561',
+    '#FCD757', '#F8BC58', '#F58F40', '#F26330', '#FF2700'
 ]; // Tableau-10
 
 
