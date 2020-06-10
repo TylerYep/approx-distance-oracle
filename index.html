@@ -198,7 +198,7 @@
 					<p>
 						We could find the second set of distances by running Dijkstra's algorithm from each vertex, but that just means solving APSP, so we need something more efficient. First, we can notice that we are only searching for distances from vertices in $V$ to vertices in $V \setminus A$, so instead of running Dijkstra's algorithm from every $v \in V$, we can run it from every $w \in V \setminus A$. Second, we do not need to know the distances from each $w \in V \setminus A$ to every vertex in the graph; we only need the distances from each $w \in V \setminus A$ to the vertices $v$ such that $\dist{v}{w} < \dist{v}{A}$. This means that we can run a modified version of Dijkstra's algorithm that only finds these distances. Recall that Dijkstra's algorithm maintains shortest distance estimates for each vertex, and that when we update a vertex's shortest distance estimate, we enqueue the vertex with priority equal to its shortest distance estimate. In our modified version of Dijkstra's algorithm, we only update the shortest distance estimate of a vertex $v$, and only enqueue $v$, if the new shortest distance estimate is less than $\dist{v}{A}$. This ensures that we only calculate the distances we need to know, and once we have those distances, we can store them in a hash table for easy lookup later on. To recount, given a graph $G = (V, E)$, our entire preprocessing algorithm is as follows:
 						<ol>
-							<li><b>Create set $A$:</b> Initialize $A \gets \varnothing$. For each $v \in V$, add $v$ to $A$ with probability $q$.</li>
+							<li><b>Create set $A$:</b> Initialize $A \gets \empty$. For each $v \in V$, add $v$ to $A$ with probability $q$.</li>
 							<li><b>Calculate distances from each $w \in A$:</b> For each $w \in A$, run Dijkstra's algorithm from $w$ and store the distances obtained.</li>
 							<li><b>Calculate $\dist{v}{A}$ and $\p{v}$ for each $v \in V$:</b> Add a vertex $s$ to the graph, and add edges of weight 0 from $s$ to each vertex in $A$. Run Dijkstra's algorithm from $s$ to find each $\dist{v}{A}$ and $\p{v}$.</li>
 							<li><b>Find bunches and calculate distances to nearby vertices:</b> Initialize $\bunch{v} \gets A$ for each $v \in V$. For each $w \in V \setminus A$, run a modified version of Dijkstra's algorithm from $w$: when we are about to update the shortest distance estimate of some vertex $v$ and enqueue $v$, only do so if that estimate is less than $\dist{v}{A}$. If we do update the estimate of a vertex $v$, add $w$ to $\bunch{v}$.</li>
@@ -254,6 +254,7 @@
 		<section class="main style1">
 			<div class="container">
 				<h2>Third Attempt: A more general structure</h2>
+				We have a structure that works well if we are okay with preprocessing time $\bigo{mn^{1/2}}$ and a data structure of size $\bigo{n^{3/2}}$, but as always in the design of data structures and algorithms, we are inclined to ask, <i>can we do better?</i> It turns out that, if we are okay with larger error, then the answer is yes! In particular, we generalize our earlier structure to one with some tunable parameter $k$ such that for any vertices $u$ and $v$, our approximation $\edist{u}{v}$ is upward bounded by $k\cdot \dist{u}{v}$, and we achieve an expected preprocessing time of $\bigo{mn^{1/k}}$ and a data structure of expected size $\bigo{n^{1+1/k}}$. Our earlier data structure is just the $k=2$ version of our more general structure. We describe our data structure below.
 				<section id="general-preprocessing">
 				<h3>Preprocessing</h3>
 				<p>
@@ -266,24 +267,29 @@
 					<li>
 						<b>Create subsets $A_0,...,A_k$:</b>
 						<ul>
-							<li>$A_0 = V$</li>
-							<li>For $i = 1,...,k-1$: $A_i\subseteq A_{i-1}$ where $A_i$ contains every node in $A_{i-1}$ independently with probability $q$, which we determine in runtime analysis section below</li>
-							<li>$A_k = \empty$</li>
+							<li>$A_0 \gets V$</li>
+							<li>For each $i \in \{1,\dots,k-1\}$, do the following: $A_i\subseteq A_{i-1}$ where $A_i$ contains every node in $A_{i-1}$ independently with probability $q$, which we determine in runtime analysis section below</li>
+							<li>$A_k \gets \empty$</li>
 						</ul>
 					</li>
 					<li>
-						<b>Calculate $\delta(v, A_i):=\min\{\delta(v,w)|w\in A_i\}$ and $p_i(v):=\argmin\{\delta(v,w)|w\in A_i\}$ for each $v\in V$ and $i=1,...,k$:</b> Add vertex $s$ to the graph, and add edges of weight 0 from $s$ to each vertex in $A_i$. Run Dijkstra's algorithm from $s$ as described earlier.
+						<b>Calculate $\delta(v, A_i):=\min\{\delta(v,w)|w\in A_i\}$ and $p_i(v):=\argmin\{\delta(v,w)|w\in A_i\}$ for each $v\in V$ and $i=1,...,k$:</b>
 						<ul>
 							<li>
-								$\delta(A_k, v) := \infty$
+								For each $i \in \{1, \dots,k-1\}$, do the following: add a vertex $s$ to the graph and edges of weight 0 from $s$ to each vertex in $A_i$. Run Dijkstra's algorithm once from $s$ to obtain $\dist{A_i}{v}$ and $p_i(v)$ for every vertex $v$, as we did in the earlier case.
+							</li>
+							<li>
+								$\delta(A_k, v) \gets \infty$
 							</li>
 						</ul>
 					</li>
 					<li>
-						<b>Find $B_i(v):=\{w\in A_i\setminus A_{i+1}|\delta(v,w) < \delta{A_{i+1},v}\}$ and calculate distances:</b> Initialize $B_i(v) \gets A_{i+1}$ for each $v \in V$. For each $w \in A_i \setminus A_{i+1}$, run a modified version of Dijkstra's algorithm from $w$: when we are about to update the shortest distance estimate of some vertex $v$ and enqueue $v$, only do so if that estimate is less than $\dist{v}{A_{i+1}}$. If we do update the estimate of a vertex $v$, add $w$ to $B_i{v}$.
+						<b>Find bunches and calculate distances:</b> Because there are now several sets of vertices, we define bunches a bit differently. In particular, for each vertex $v$, we define
+						$$ B_i(v):=\{w\in A_i\setminus A_{i+1}|\delta(v,w) \lt \delta{A_{i+1},v}\} $$
+						for each $i \in \{0, \dots, k-1\}$, and we define $B(v):=\bigcup_{i=1}^k B_i(v)$. Note that because $A_k = \empty$, we have $A_{k-1} \subseteq \bunch{v}$ for all vertices $v$. We determine these bunches as follows:
 						<ul>
 							<li>
-								The <i>bunch</i> corresponding to $v$ is defined as $B(v):=\bigcup_{i=1}^k B_i(v)$
+								For each $i \in \{0, \dots, k-1\}$: Run our modified version of Dijkstra's algorithm from each vertex $w \in A_i \setminus A_{i+1}$. In particular, we only enqueue a vertex $x$ if its shortest distance estimate is strictly smaller than $\dist{A_{i+1}}{x}$. If we do enqueue $x$, then we know that $\dist{w}{x} \lt \dist{A_{i+1}}{x}$, so add $w$ to $\bunch{x}$.
 							</li>
 						</ul>
 					</li>
@@ -386,7 +392,7 @@
 							\bunch{v}	&= \bigcup_{i=0}^{k-1} \curl{w \in A_i \setminus A_{i+1} \mid \dist{v}{w} \lt \dist{v}{A_{i+1}}} \\
 										&= \bigcup_{i=0}^{k-1} (\bunch{v} \cap \paren{A_i \setminus A_{i+1}}).
 						\end{aligned}$$
-						Thus, if we can upward bound the expected size of each $\bunch{v} \cap \paren{A_i \setminus A_{i+1}}$, we can upward bound the size of $\bunch{v}$. We proceed similarly as we did in our <a href="#a2-analysis">analysis for our second attempt</a>. Recall that $A_k = \varnothing$, which means that $\dist{v}{A_k} = \infty$ and therefore that $A_{k-1} \subseteq \bunch{v}$. This means that $\abs{\bunch{v} \cap \paren{A_{k-1} \setminus A_k}} = \abs{A_{k-1}}$. We see that
+						Thus, if we can upward bound the expected size of each $\bunch{v} \cap \paren{A_i \setminus A_{i+1}}$, we can upward bound the size of $\bunch{v}$. We proceed similarly as we did in our <a href="#a2-analysis">analysis for our second attempt</a>. Recall that $A_k = \empty$, which means that $\dist{v}{A_k} = \infty$ and therefore that $A_{k-1} \subseteq \bunch{v}$. This means that $\abs{\bunch{v} \cap \paren{A_{k-1} \setminus A_k}} = \abs{A_{k-1}}$. We see that
 						$$\begin{aligned}
 							\ev{\abs{\bunch{v} \cap \paren{A_{k-1} \setminus A_k}}}	&= \ev{\abs{A_{k-1}}} \\
 																					&= q^{k-1}n.
