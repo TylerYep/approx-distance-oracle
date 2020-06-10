@@ -40,9 +40,10 @@ h2, h3 {
 }
 
 h4 {
-    font-size: 14px;
+    font-size: 20px;
     margin: 0;
-    margin-bottom: 20px;
+    margin-bottom: 28px;
+    font-style:italic;
 }
 
 #scoreValue {
